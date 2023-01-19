@@ -27,6 +27,8 @@ class CPU:
         self.threads = []
         self.exit_event = Event()
         self.intr_event = Event()
+        self.intr_mask = False
+        self.intr_pending = False
 
     def register_thread(self, thread):
         self.threads.append(thread)
@@ -40,6 +42,8 @@ class CPU:
         self.intr_event.set()
 
         with self.cpu_lock:
+            self.dsi()
+
             if self.registers[self.REG_TRAP] and addr != self.TRAP_DTRAP:
                 # We've already trapped and the flag wasn't cleared!
                 return self.trap(self.TRAP_DTRAP)
@@ -197,11 +201,23 @@ class CPU:
         quit()
 
     def intr(self):
-        self.trap(self.TRAP_INTR)
+        if self.intr_mask:
+            self.intr_pending = True
+        else:
+            self.trap(self.TRAP_INTR)
 
     def ret(self):
         self.registers[self.REG_TRAP] = 0
         self.registers[self.REG_PC] = self.registers[self.REG_RET]
+        self.eni()
+
+    def eni(self):
+        self.intr_mask = False
+        if self.intr_pending:
+            self.intr()
+
+    def dsi(self):
+        self.intr_mask = True
 
     def wait(self):
         self.intr_event.wait()
@@ -256,9 +272,11 @@ class CPU:
         ((IA_NONE,  IA_NONE,  IA_NONE),  halt),     # 0x1e
         ((IA_NONE,  IA_NONE,  IA_NONE),  intr),     # 0x1f
         ((IA_NONE,  IA_NONE,  IA_NONE),  ret),      # 0x21
-        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x22
-        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x23
-        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x24
+        ((IA_NONE,  IA_NONE,  IA_NONE),  eni),      # 0x22
+        ((IA_NONE,  IA_NONE,  IA_NONE),  dsi),      # 0x23
+        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x24
+        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x25
+        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x26
     ]
 
     def decode_next_instr(self):

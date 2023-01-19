@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pyarch.cpu import CPU
 from collections import defaultdict
 import sys
