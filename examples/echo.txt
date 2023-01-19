@@ -1,0 +1,59 @@
+# Entry
+jmp .start
+
+# Interrupt vectors
+.intr_vec
+jmp FFFFFFE6
+halt
+halt
+halt
+
+# Program
+
+# Set up interrupt controller
+.start
+savewi 40 FFFFFFD2
+savewi .keyboard_intr FFFFFFD6
+savebi 1 FFFFFFDA
+savewi 0 FFFFFFCE
+
+# Set up keyboard
+savewi 1 FFFFFFC1
+
+# Main loop
+.loop
+
+# Wait for interrupt
+wait
+
+# Check flag
+jmpeqi A 1 .exit
+
+# And back around
+jmp .loop
+
+# Keyboard interrupt
+.keyboard_intr
+
+# Read keystroke
+loadw B FFFFFFC5
+
+# Print it if nonzero
+jmpeqi B 0 .return
+saveb B FFFFFFFF
+
+# Is the keystroke a tilde?
+jmpnei B 7E .return
+
+# It is, so set the flag to exit
+loadwi A 1
+
+# Return
+.return
+# Reenable interrupts
+savewi 0 FFFFFFCE 0
+ret
+
+# End program
+.exit
+halt

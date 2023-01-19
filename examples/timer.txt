@@ -1,0 +1,33 @@
+# Entry
+jmp .start
+
+# Interrupt vectors
+.intr_vec
+jmp FFFFFFE6
+halt
+halt
+halt
+
+# Program
+
+# Set up interrupt controller
+.start
+savewi 20 FFFFFFD2
+savewi .timer_intr FFFFFFD6
+savebi 1 FFFFFFDA
+savewi 0 FFFFFFCE
+
+# Set up timer
+savewi 64 FFFFFFC9
+
+# Main loop
+.loop
+nop
+jmplti A F .loop
+halt
+
+# Timer interrupt
+.timer_intr
+addi A 1 A
+savewi 0 FFFFFFCE
+ret
