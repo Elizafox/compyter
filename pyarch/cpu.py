@@ -51,7 +51,7 @@ class CPU:
             self.registers[self.REG_TRAP] = 1
             self.registers[self.REG_RET] = self.registers[self.REG_PC]
             self.jmp(addr)
-        
+
             self.intr_event.clear()
 
     def jmp(self, addr):
@@ -65,7 +65,7 @@ class CPU:
     def jmpeq(self, reg1, reg2, addr):
         if self.registers[reg1] == self.registers[reg2]:
             self.jmp(addr)
-    
+
     def jmpeqi(self, reg1, val, addr):
         self.registers[self.REG_RESVD] = val
         self.jmpeq(reg1, self.REG_RESVD, addr)
@@ -73,7 +73,7 @@ class CPU:
     def jmpne(self, reg1, reg2, addr):
         if self.registers[reg1] != self.registers[reg2]:
             self.jmp(addr)
-    
+
     def jmpnei(self, reg1, val, addr):
         self.registers[self.REG_RESVD] = val
         self.jmpne(reg1, self.REG_RESVD, addr)
@@ -81,7 +81,7 @@ class CPU:
     def jmpgt(self, reg1, reg2, addr):
         if self.registers[reg1] > self.registers[reg2]:
             self.jmp(addr)
-    
+
     def jmpgti(self, reg1, val, addr):
         self.registers[self.REG_RESVD] = val
         self.jmpgt(reg1, self.REG_RESVD, addr)
@@ -89,7 +89,7 @@ class CPU:
     def jmpge(self, reg1, reg2, addr):
         if self.registers[reg1] >= self.registers[reg2]:
             self.jmp(addr)
-    
+
     def jmpgei(self, reg1, val, addr):
         self.registers[self.REG_RESVD] = val
         self.jmpge(reg1, self.REG_RESVD, addr)
@@ -105,7 +105,7 @@ class CPU:
     def jmple(self, reg1, reg2, addr):
         if self.registers[reg1] <= self.registers[reg2]:
             self.jmp(addr)
-    
+
     def jmplei(self, reg1, val, addr):
         self.registers[self.REG_RESVD] = val
         self.jmple(reg1, self.REG_RESVD, addr)
@@ -230,6 +230,40 @@ class CPU:
     def copy(self, reg1, reg2):
         self.registers[reg1] = self.registers[reg2]
 
+    def and_(self, reg1, reg2, reg3):
+        self.registers[reg3] = self.registers[reg1] & self.registers[reg2]
+
+    def andi(self, reg1, val, reg2):
+        self.registers[reg2] = self.registers[reg1] & val
+
+    def or_(self, reg1, reg2, reg3):
+        self.registers[reg3] = self.registers[reg1] | self.registers[reg2]
+
+    def ori(self, reg1, val, reg2):
+        self.registers[reg2] = self.registers[reg1] | val
+
+    def xor_(self, reg1, reg2, reg3):
+        self.registers[reg3] = self.registers[reg1] ^ self.registers[reg2]
+
+    def xori(self, reg1, val, reg2):
+        self.registers[reg2] = self.registers[reg1] ^ val
+
+    def not_(self, reg1, reg2):
+        self.registers[reg2] = ~self.registers[reg1]
+
+    def shl(self, reg1, reg2, reg3):
+        self.registers[reg3] = self.registers[reg1] << self.registers[reg2]
+
+    def shli(self, reg1, val, reg2):
+        self.registers[reg2] = self.registers[reg1] << val
+
+    def shr(self, reg1, reg2, reg3):
+        self.registers[reg3] = self.registers[reg1] >> self.registers[reg2]
+
+    def shri(self, reg1, val, reg2):
+        self.registers[reg2] = self.registers[reg1] >> val
+
+
     # Instruction parameter types
     IA_NONE = 0
     IA_IMMED = 1
@@ -277,6 +311,17 @@ class CPU:
         ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x24
         ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x25
         ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x26
+        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x27
+        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x28
+        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x29
+        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x27
+        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x28
+        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x29
+        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x2a
+        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x2b
+        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x2c
+        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x2d
+        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x2e
     ]
 
     def decode_next_instr(self):
@@ -294,7 +339,7 @@ class CPU:
             self.loadw(self.REG_RESVD, self.registers[self.REG_PC])
             op2 = self.registers[self.REG_RESVD]
             self.registers[self.REG_PC] += 4
-            
+
             self.loadw(self.REG_RESVD, self.registers[self.REG_PC])
             op3 = self.registers[self.REG_RESVD]
             self.registers[self.REG_PC] += 4
