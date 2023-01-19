@@ -4,6 +4,7 @@ from ..util import set_word_byte, get_word_byte, in_range
 from threading import Thread, Event, Lock
 from queue import Queue
 
+
 class InterruptHardware(Hardware):
     INT_NUM = -1
 
