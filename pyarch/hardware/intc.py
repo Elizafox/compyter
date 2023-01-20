@@ -85,7 +85,7 @@ class InterruptController(Hardware):
                 return get_word_byte(self.reg_intvec, item - self.INTC_REG_INTVEC)
             elif item == self.INTC_JMP_INSTR + 3:
                 # jmp opcode
-                return 0x11
+                return 0x15
             elif in_range(item, self.INTC_JMP_INSTR + 4, self.INTC_JMP_INSTR + 7):
                 # address for jmp
                 return get_word_byte(self.current, item - (self.INTC_JMP_INSTR + 4))
