@@ -79,7 +79,7 @@ A very basic storage controller. It features a 512-byte window for reading/writi
 
 The emulated storage device is backed by a file. It should be a multiple of 512 bytes in size.
 
-The offset register is at `0xfffffdb0`-`0xfffffdb3` and is absolute (i.e. to change to the next window, you must add 512 to the register). The read/write register (0 for enable, 1 for disable) is at `0xfffffdb4`-`0xfffffdb7`. The size register is at `0xfffffdb8`-`0xfffffdbb`. The window is at `0xfffffdc0`-`0xffffffbf`.
+The offset register is at `0xfffffdb0` - `0xfffffdb3` and is absolute (i.e. to change to the next window, you must add 512 to the register). The read/write register (0 for enable, 1 for disable) is at `0xfffffdb4` - `0xfffffdb7`. The size register is at `0xfffffdb8` - `0xfffffdbb`. The window is at `0xfffffdc0` - `0xffffffbf`.
 
 #### Interrupt controller
 This is by far the most complex peripherial.
@@ -94,10 +94,13 @@ The interrupt number is stored at `0xffffffd2` - `0xffffffd5`. The address vecto
 Writing anything to `0xffffffda` - `0xffffffdd` will add the vector stored in the interrupt number and vector to the interrupt table. When an interrupt fires, it will jump to that vector, provided the interrupt handler for the CPU is set to the handler for the interrupt controller.
 
 ##### Removing a vector
-Writing anything to `0xffffffde` - `0xffffffe1` will delete the vector for interrupt number. The interrupt vector register is ignored. If the interrupt doesn't exist, this is a no-op.
+Writing anything non-zero to `0xffffffde` - `0xffffffe1` will delete the vector for interrupt number. The interrupt vector register is ignored. If the interrupt doesn't exist, this is a no-op.
 
 ##### Retrieving a vector
-Writing anything to `0xffffffe2` - `0xffffffe5` will store the current vector for the interrupt number in the register. The interrupt vector register's contents are replaced. If no such interrupt exists, `0xffffffff` will be written instead.
+Writing anything non-zero to `0xffffffe2` - `0xffffffe5` will store the current vector for the interrupt number in the register. The interrupt vector register's contents are replaced. If no such interrupt exists, `0xffffffff` will be written instead.
+
+##### Triggering an interrupt
+Writing anything non-zero to `0xffffffe6` - `0xffffffe9` will trigger the interrupt in the interrupt number register. The interrupt vector register is ignored.
 
 ##### Installing the handler
-To use this interrupt controller, the handler `jmp FFFFFFE6` must be installed for the interrupt trap. This will redirect the request to the interrupt controller, which will `jmp` to the handler. If no handler is installed, it will `jmp` to 0 (effectively a reset). This behaviour may change.
+To use this interrupt controller, the handler `jmp FFFFFFEA` must be installed for the interrupt trap. This will redirect the request to the interrupt controller, which will `jmp` to the handler. If no handler is installed, it will `jmp` to 0 (effectively a reset). This behaviour may change.

@@ -26,7 +26,8 @@ class InterruptController(Hardware):
     INTC_ADD_INT = 0xc     # 0xffffffda
     INTC_DEL_INT = 0x10    # 0xffffffde
     INTC_GET_INT = 0x14    # 0xffffffe2
-    INTC_JMP_INSTR = 0x18  # 0xffffffe6
+    INTC_TRIGGER = 0x18    # 0xffffffe6
+    INTC_JMP_INSTR = 0x1c  # 0xffffffea
 
     def __init__(self, cpu, memory):
         super().__init__(cpu, memory)
@@ -110,5 +111,8 @@ class InterruptController(Hardware):
                 if val > 0:
                     # No such interrupt! This is an unlikely vector address, so this is a decent sentinel.
                     self.reg_intvec = self.interrupts.get(self.reg_intnum, 0xffffffff)
+            elif in_range(item, self.INTC_TRIGGER, self.INTC_TRIGGER + 3):
+                if val > 0:
+                    self.interrupt(self.reg_intnum)
             else:
                 return

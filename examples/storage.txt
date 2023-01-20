@@ -3,7 +3,7 @@ jmp .start
 
 # Interrupt vectors
 .intr_vec
-jmp FFFFFFE6
+jmp FFFFFFEA
 halt
 halt
 halt
