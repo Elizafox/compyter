@@ -23,6 +23,22 @@ There are 32 32-bit registers. The first five registers are reserved:
 
 Immediate versions of these operations are available with an `i` suffix (except for `not`), which take a register and an immediate value.
 
+## Load/store
+There are two base instructions: `load*` and `save*`. They perform various load/store functions as the names imply.
+
+`loadw` loads a span from the given address to the address plus 3 into a register (the order is `loadw [reg] [addr]`). `savew` likewise saves a register into an address span (the order is the same).
+
+`loadb` loads a single byte from an address into a register (the order is the same). `savew` likewise saves a byte into an address.
+
+`loadwr` and `savewr` work the same as `loadw` and `savew`, except the address is taken from a register instead of a fixed value. `loadbr` and `savebr` do the same, but with single bytes.
+
+`loadwi` loads an immediate value into a register (the order is `loadwi [reg] [val]`). `savewi` saves an immediate value to an address (the order is the same). `loadbi` and `savebi` work the same, except for bytes.
+
+### Other instructions
+`swap` swaps the value of two registers.
+
+`copy` copies the value of a register into another.
+
 ## Branching
 `jmp`, `jmpeq`, `jmpne`, `jmpgt`, `jmpge`, `jmplt`, `jmple` are all available, comparing two registers (except for `jmp` which is unconditional). Comparisons with immediates are available,suffixed with `i`.
 
