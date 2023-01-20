@@ -58,6 +58,13 @@ A very basic keyboard controller. It uses interrupt 0x40 on the controller. Writ
 
 Keystrokes can be retrieved by reading from `0xffffffc5` - `0xffffffc8` when an interrupt fires.
 
+#### Storage
+A very basic storage controller. It features a 512-byte window for reading/writing, an offset register for moving the window, a read/write enable register, and a read-only size register.
+
+The emulated storage device is backed by a file. It should be a multiple of 512 bytes in size.
+
+The offset register is at `0xfffffdb0`-`0xfffffdb3` and is absolute (i.e. to change to the next window, you must add 512 to the register). The read/write register (0 for enable, 1 for disable) is at `0xfffffdb4`-`0xfffffdb7`. The size register is at `0xfffffdb8`-`0xfffffdbb`. The window is at `0xfffffdc0`-`0xffffffbf`.
+
 #### Interrupt controller
 This is by far the most complex peripherial.
 
