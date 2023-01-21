@@ -1,0 +1,220 @@
+### Entry
+jmp .start
+
+### Interrupt vectors
+.intr_vec
+jmp FFFFFFEA
+halt
+halt
+halt
+
+.stack
+!zero 400
+.end_stack
+
+.string_loc
+!zero 10 
+.end_string_loc
+
+### Program
+.start
+
+# Initalise stack
+loadwi 1 .stack
+
+### Call itoa
+loadwi A 7FFFFFFF 
+loadwi B .string_loc
+loadwi 9 .return_itoa    # Return address
+jmp .itoa
+
+.return_itoa
+
+### Print the string
+loadwi A .string_loc
+loadwi 9 .exit
+jmp .print
+
+### End program
+.exit
+halt
+
+
+### print function
+# Input: Register 9: Return address
+# Input: Register A: Start location of our string
+.print
+
+# Push to the stack
+addi 1 1 1
+savewr A 1
+addi 1 1 1
+savewr B 1
+
+.print_loop
+
+# Load character
+loadbr B A
+
+# Have we reached null?
+jmpeqi B 0 .print_end
+
+# Not null, print the character
+saveb B FFFFFFFF
+
+# Next character
+addi A 1 A
+
+# And back around
+jmp .print_loop
+
+.print_end
+
+# Line feed
+savebi A FFFFFFFF
+
+# Pop off the stack
+loadwr B 1
+subi 1 1 1
+loadwr A 1
+subi 1 1 1
+
+# Return
+jmpr 9
+
+
+### itoa function
+# Input: Register 9: Return address
+# Input: Register A: Our number to convert to a string
+# Input: Register B: Destination address for null-terminated string (must be at least 12 bytes)
+.itoa
+
+# Push to the stack
+addi 1 1 1
+savewr A 1
+addi 1 1 1
+savewr B 1
+addi 1 1 1
+savewr C 1
+addi 1 1 1
+savewr D 1
+addi 1 1 1
+savewr E 1
+addi 1 1 1
+savewr F 1
+addi 1 1 1
+savewr 10 1
+
+## Zero the string
+# Save B 
+copy C B
+
+# Begin zeroing
+savewri 0 B  # 0x0-0x3
+addi B 4 B
+savewri 0 B  # 0x4-0x7
+addi B 4 B
+savewri 0 B  # 0x8-0xc
+
+# Restore B
+swap C B
+
+# Zero must be handled specially
+jmpnei A 0 .itoa_non_zero
+
+# It's zero.
+savebri 30 B   # Save ASCII 0 to the string
+
+# Return
+jmp .itoa_done
+
+# It isn't zero, continue
+.itoa_non_zero
+
+# Zero out the negative flag
+loadwi C 0
+
+# Store original offset
+copy E B
+
+# Is it negative?
+jmpgti A 0 .itoa_loop
+
+# It's negative, negate it
+muli A -1 A
+loadwi C 1  # Set negative flag
+
+.itoa_loop
+
+# While the number is not zero
+jmpeqi A 0 .itoa_loop_done
+
+modi A A D
+addi D 30 D  # Add ASCII '0' to obtain the digit
+savebr D B   # Write it to the string
+addi B 1 B   # Next character
+divi A A A
+
+jmp .itoa_loop  # Back around
+
+.itoa_loop_done
+
+# Number is not negative, skip this bit
+jmpeqi C 0 .itoa_reverse
+
+# Number is negative, add the sign
+savebri 2D B
+addi B 1 B
+
+.itoa_reverse
+
+# Start position
+loadwi C 0
+
+# Compute end position
+sub B E D
+subi D 1 D
+
+.itoa_reverse_loop
+
+# Check if we've reversed the whole string
+jmpge C D .itoa_done
+
+# Get start char
+add E C A    # string start + start offset
+loadbr F A   # Load start char into F
+
+# Get end char
+add E D B    # string start + end offset
+loadbr 10 B  # Load end char into 10
+
+# Swap the characters
+savebr F B   # Load start char into B (start offset)
+savebr 10 A  # Load end char into A (end offset)
+
+addi C 1 C   # Start offset
+subi D 1 D   # End offset
+
+# Loop again
+jmp .itoa_reverse_loop
+
+.itoa_done
+
+# Pop from the stack
+loadwr 10 1
+subi 1 1 1
+loadwr F 1
+subi 1 1 1
+loadwr E 1
+subi 1 1 1
+loadwr D 1
+subi 1 1 1
+loadwr C 1
+subi 1 1 1
+loadwr B 1
+subi 1 1 1
+loadwr A 1
+subi 1 1 1
+
+# Jump back
+jmpr 9
