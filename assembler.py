@@ -21,8 +21,23 @@ out = bytearray()
 filename = sys.argv[1] if len(sys.argv) > 1 else "assemble.txt"
 with open(filename, "r") as in_f:
     for line in in_f.readlines():
+        commentpos = line.find("#")
+        if commentpos >= 0:
+            line = line[0:commentpos]
+
         line = line.strip()
-        if not line or line.startswith("#"):
+
+        if not line:
+            continue
+        elif line.startswith("!"):
+            statement = line[1:].split()
+            if statement[0] == "data":
+                for data in statement[1:]:
+                    data = int(data, base=16) & 0xff
+                    out.append(data)
+            elif statement[0] == "zero":
+                out += b"\x00" * int(statement[1], base=16)
+
             continue
         elif line.startswith("."):
             # Got a label
@@ -31,7 +46,7 @@ with open(filename, "r") as in_f:
             if label in resolve_pending:
                 # Resolve outstanding labels
                 for addr in resolve_pending[label]:
-                    data = pc.to_bytes(4, 'big')
+                    data = pc.to_bytes(4, "big")
                     out[addr:addr+4] = data
 
                 del resolve_pending[label]
@@ -75,7 +90,7 @@ with open(filename, "r") as in_f:
 
         # Write out the data
         for i in data:
-            out += i.to_bytes(4, 'big')
+            out += i.to_bytes(4, "big")
 
         # Increment program counter to next instr
         pc += 16
