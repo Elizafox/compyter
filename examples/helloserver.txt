@@ -1,0 +1,121 @@
+### Entry
+jmp .start
+
+### Interrupt vectors
+.intr_vec
+jmp FFFFFFEA
+halt
+halt
+halt
+
+#### Program
+
+# Set up interrupt controller
+.start
+savewi C0 FFFFFFD2
+savewi .async_intr FFFFFFD6
+savebi 1 FFFFFFDA
+savewi 0 FFFFFFCE
+
+### Get socket
+# IPv4
+savewi 1 FFFFF95F
+
+# TCP
+savewi 1 FFFFF963
+
+# Open socket
+savewi 1 FFFFF96B
+
+# Did we succeed?
+loadw A FFFFF973
+jmplti A 0 .exit
+
+# Load socket into B
+loadw B FFFFF967
+
+### Bind
+# 0.0.0.0
+savewi 0 FFFFF94F
+savewi 0 FFFFF953
+savewi 0 FFFFF957
+savewi 0 FFFFF95B
+
+# Port 6969
+savewi 1B39 FFFFF96F
+
+# Perform bind
+savewi 2 FFFFF96B
+
+# Did we succeed?
+loadw A FFFFF973
+jmplti A 0 .exit
+
+### Listen!
+savewi 4 FFFFF96B
+
+# Did we succeed?
+loadw A FFFFF973
+jmplti A 0 .exit
+
+### Set up interrupt event for listening
+savewi 1 FFFFF96F
+savewi F FFFFF96B
+
+### Main loop
+.loop
+
+# Wait for an interrupt
+wait
+
+# And back around
+jmp .loop
+
+### Accept routine
+.async_intr
+
+# Load the connection from the async handle reg
+loadw A FFFFF97B
+
+# Store it in the main controller register
+savew A FFFFF967
+
+# Accept the connection
+savewi 5 FFFFF96B
+
+# Did it give us an error?
+loadw A FFFFF973
+jmpgti A 0 .async_intr_end
+
+# Copy "Hello world!\r\n" to the buffer
+savewi 68656C6C FFFFF9AF
+savewi 6F20776F FFFFF9B3
+savewi 726C6421 FFFFF9B7
+savewi 0D0A0000 FFFFF9BB
+
+# Save buffer length
+savewi E FFFFF9AB
+
+# Erase params before send
+savewi 0 FFFFF96F
+
+# Perform send
+savewi A FFFFF96B
+
+# Close the client connection
+savewi 6 FFFFF96B
+
+# Restore the listening socket
+savew B FFFFF967
+
+.async_intr_end
+# Reenable interrupts
+savewi 0 FFFFFFCE 0
+
+# Set handler as done
+savewi 11 FFFFF96B
+ret
+
+### End program
+.exit
+halt
