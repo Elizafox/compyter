@@ -2,7 +2,6 @@ from threading import RLock, Event
 from time import sleep
 
 class CPU:
-    MINVAL = -(2 ** 32)
     MAXVAL = (2 ** 32) - 1
 
     # Special regs
@@ -151,7 +150,7 @@ class CPU:
 
     def add(self, reg1, reg2, reg3):
         result = self.registers[reg1] + self.registers[reg2]
-        self.registers[reg3] = result % self.MAXVAL
+        self.registers[reg3] = result & 0xffffffff
         self.registers[self.REG_CARRY] = int(result > self.MAXVAL)
 
     def addi(self, reg1, val, reg2):
@@ -160,8 +159,8 @@ class CPU:
 
     def sub(self, reg1, reg2, reg3):
         result = self.registers[reg1] - self.registers[reg2]
-        self.registers[reg3] = result  # XXX - underflow
-        self.registers[self.REG_CARRY] = int(result < self.MINVAL)
+        self.registers[reg3] = result & 0xffffffff
+        self.registers[self.REG_CARRY] = 0
 
     def subi(self, reg1, val, reg2):
         self.registers[self.REG_RESVD] = val
@@ -169,12 +168,36 @@ class CPU:
 
     def mul(self, reg1, reg2, reg3):
         result = self.registers[reg1] * self.registers[reg2]
-        self.registers[reg3] = result % self.MAXVAL
+        self.registers[reg3] = result & 0xffffffff
         self.registers[self.REG_CARRY] = int(result > self.MAXVAL)
 
     def muli(self, reg1, val, reg2):
         self.registers[self.REG_RESVD] = val
         return self.mul(reg1, self.REG_RESVD, reg2)
+
+    @staticmethod
+    def _div(dividend, divisor):
+        divisor_compl = (divisor ^ 0xffffffff) + 1
+
+        quotient = dividend
+        remainder = 0
+
+        for _ in range(0, 32):
+            carry = quotient >> 31
+
+            quotient <<= 1
+            quotient &= 0xffffffff
+
+            remainder <<= 1
+            remainder &= 0xffffffff
+            remainder |= carry
+
+            test = (remainder + divisor_compl) & 0xffffffff
+            if (test & 0x80000000) == 0:
+                remainder = test
+                quotient |= 1
+
+        return (quotient, remainder)
 
     def div(self, reg1, reg2, reg3):
         if self.registers[reg2] == 0:
@@ -182,8 +205,8 @@ class CPU:
             self.trap(self.TRAP_DIV)
             return
 
-        result = self.registers[reg1] // self.registers[reg2]
-        self.registers[reg3] = result
+        result = self._div(self.registers[reg1], self.registers[reg2])
+        self.registers[reg3] = result[0] & 0xffffffff
         self.registers[self.REG_CARRY] = 0
 
     def divi(self, reg1, val, reg2):
@@ -196,8 +219,8 @@ class CPU:
             self.trap(self.TRAP_DIV)
             return
 
-        result = self.registers[reg1] % self.registers[reg2]
-        self.registers[reg3] = result
+        result = self._div(self.registers[reg1], self.registers[reg2])
+        self.registers[reg3] = result[1] & 0xffffffff
         self.registers[self.REG_CARRY] = 0
 
     def modi(self, reg1, val, reg2):
@@ -236,7 +259,7 @@ class CPU:
     def savewi(self, val, addr):
         self.registers[self.REG_RESVD] = val
         self.savew(self.REG_RESVD, addr)
-    
+
     def savewri(self, val, reg1):
         self.savewi(val, self.registers[reg1])
 
@@ -321,13 +344,13 @@ class CPU:
         self.registers[reg2] = self.registers[reg1] ^ val
 
     def not_(self, reg1, reg2):
-        self.registers[reg2] = ~self.registers[reg1]
+        self.registers[reg2] = (~self.registers[reg1]) & 0xffffffff
 
     def shl(self, reg1, reg2, reg3):
-        self.registers[reg3] = self.registers[reg1] << self.registers[reg2]
+        self.registers[reg3] = (self.registers[reg1] << self.registers[reg2]) & 0xffffffff
 
     def shli(self, reg1, val, reg2):
-        self.registers[reg2] = self.registers[reg1] << val
+        self.registers[reg2] = (self.registers[reg1] << val) & 0xffffffff
 
     def shr(self, reg1, reg2, reg3):
         self.registers[reg3] = self.registers[reg1] >> self.registers[reg2]
