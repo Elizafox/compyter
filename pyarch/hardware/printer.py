@@ -13,7 +13,7 @@ class Printer(Hardware):
     def __getitem__(self, item):
         return self.char
 
-    def __setitem__(self, item, value):
-        self.char = value
-        sys.stdout.write(chr(value))
+    def __setitem__(self, item, val):
+        self.char = val
+        sys.stdout.write(chr(val))
         sys.stdout.flush()
