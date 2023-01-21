@@ -20,7 +20,10 @@ out = bytearray()
 
 filename = sys.argv[1] if len(sys.argv) > 1 else "assemble.txt"
 with open(filename, "r") as in_f:
+    lineno = 0
     for line in in_f.readlines():
+        lineno += 1
+
         commentpos = line.find("#")
         if commentpos >= 0:
             line = line[0:commentpos]
@@ -74,7 +77,12 @@ with open(filename, "r") as in_f:
                 print("Invalid statement: '{}'", line)
                 quit()
 
-            arg = statement[i]
+            try:
+                arg = statement[i]
+            except Exception as e:
+                print(f"Line {lineno}: Bad argument")
+                quit()
+
             if arg.startswith("."):
                 label = arg[1:]
                 if label in labeltable:
