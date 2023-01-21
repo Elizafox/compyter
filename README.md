@@ -19,7 +19,7 @@ There are 32 32-bit registers. The first five registers are reserved:
 6) **Register 5**: Trap flag (whether or not we're in an interrupt handler) (**REG_TRAP**)
 
 ## Arithmetic
-`add`, `sub`, `mul`, `div`, `shl`, `shr`, `and`, `or`, `xor`, and `not` are supported, using registers as operands and storing the result in a third register.
+`add`, `sub`, `mul`, `div`, `mod`, `shl`, `shr`, `and`, `or`, `xor`, and `not` are supported, using registers as operands and storing the result in a third register.
 
 Immediate versions of these operations are available with an `i` suffix (except for `not`), which take a register and an immediate value.
 
