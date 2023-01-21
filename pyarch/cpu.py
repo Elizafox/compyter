@@ -176,7 +176,7 @@ class CPU:
         return self.mul(reg1, self.REG_RESVD, reg2)
 
     @staticmethod
-    def _div(dividend, divisor):
+    def _divmod(dividend, divisor):
         divisor_compl = (divisor ^ 0xffffffff) + 1
 
         quotient = dividend
@@ -205,7 +205,7 @@ class CPU:
             self.trap(self.TRAP_DIV)
             return
 
-        result = self._div(self.registers[reg1], self.registers[reg2])
+        result = self._divmod(self.registers[reg1], self.registers[reg2])
         self.registers[reg3] = result[0] & 0xffffffff
         self.registers[self.REG_CARRY] = 0
 
@@ -219,7 +219,7 @@ class CPU:
             self.trap(self.TRAP_DIV)
             return
 
-        result = self._div(self.registers[reg1], self.registers[reg2])
+        result = self._divmod(self.registers[reg1], self.registers[reg2])
         self.registers[reg3] = result[1] & 0xffffffff
         self.registers[self.REG_CARRY] = 0
 
