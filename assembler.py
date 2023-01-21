@@ -7,7 +7,10 @@ import sys
 # Populate the sym table
 symtable = {}
 for opcode, (args, fn) in enumerate(CPU.INSTRS):
-    symtable[fn.__name__] = (opcode, args)
+    name = fn.__name__
+    if name.endswith("_"):
+        name = name.rstrip("_")
+    symtable[name] = (opcode, args)
 
 # Label table
 labeltable = {}
