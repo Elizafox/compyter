@@ -35,8 +35,10 @@ with open(filename, "r") as in_f:
                 for data in statement[1:]:
                     data = int(data, base=16) & 0xff
                     out.append(data)
+                    pc += 1
             elif statement[0] == "zero":
                 out += b"\x00" * int(statement[1], base=16)
+                pc += int(statement[1], base=16)
 
             continue
         elif line.startswith("."):
@@ -72,7 +74,6 @@ with open(filename, "r") as in_f:
                 print("Invalid statement: '{}'", line)
                 quit()
 
-            offset = (i + 1) * 4
             arg = statement[i]
             if arg.startswith("."):
                 label = arg[1:]
@@ -81,10 +82,13 @@ with open(filename, "r") as in_f:
                     arg = labeltable[label]
                 else:
                     # Ope, not yet
+                    offset = (i + 1) * 4
                     resolve_pending[label].append(pc + offset)
                     arg = 0
             else:
                 arg = int(arg, base=16)
+                if arg < 0:
+                    arg = abs(0x100000000 - abs(arg))
 
             data[i + 1] = arg
 

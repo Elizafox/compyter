@@ -160,7 +160,7 @@ class CPU:
 
     def sub(self, reg1, reg2, reg3):
         result = self.registers[reg1] - self.registers[reg2]
-        self.registers[reg3] = result % self.MINVAL
+        self.registers[reg3] = result  # XXX - underflow
         self.registers[self.REG_CARRY] = int(result < self.MINVAL)
 
     def subi(self, reg1, val, reg2):
@@ -236,6 +236,9 @@ class CPU:
     def savewi(self, val, addr):
         self.registers[self.REG_RESVD] = val
         self.savew(self.REG_RESVD, addr)
+    
+    def savewri(self, val, reg1):
+        self.savewi(val, self.registers[reg1])
 
     def loadb(self, reg1, addr):
         self.registers[reg1] = self.memory[addr]
@@ -256,11 +259,8 @@ class CPU:
         self.registers[self.REG_RESVD] = val
         self.saveb(self.REG_RESVD, addr)
 
-    def savewri(self, val, reg1):
-        self.savewr(val, self.registers[reg1])
-
-    def savebri (self, val1, reg1):
-        self.savebr(val, self.registers[reg1])
+    def savebri (self, val, reg1):
+        self.savebi(val, self.registers[reg1])
 
     def nop(self):
         pass
@@ -471,7 +471,7 @@ class CPU:
                     continue
                 elif argtype == self.IA_REG:
                     if arg > self.REG_RESVD:
-                        print("Bad register", arg)
+                        print("Bad register", hex(arg))
                         return self.trap(self.TRAP_ILL)
 
                 arglist.append(arg)
