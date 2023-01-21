@@ -34,13 +34,15 @@ There are two base instructions: `load*` and `save*`. They perform various load/
 
 `loadwi` loads an immediate value into a register (the order is `loadwi [reg] [val]`). `savewi` saves an immediate value to an address (the order is the same). `loadbi` and `savebi` work the same, except for bytes.
 
+`savewri` and `savebri` work like a cross between `save*r` and `save*i`. They take immediates, but will save to the address pointed to by the given register.
+
 ### Other instructions
 `swap` swaps the value of two registers.
 
 `copy` copies the value of a register into another.
 
 ## Branching
-`jmp`, `jmpeq`, `jmpne`, `jmpgt`, `jmpge`, `jmplt`, `jmple` are all available, comparing two registers (except for `jmp` which is unconditional). Comparisons with immediates are available,suffixed with `i`.
+`jmp`, `jmpeq`, `jmpne`, `jmpgt`, `jmpge`, `jmplt`, `jmple` are all available, comparing two registers (except for `jmp` which is unconditional). Comparisons with immediates are available,suffixed with `i` (`jmpeqi`, `jmpnei`, `jmpgti`, `jmpgei`, `jmplti`, and `jmplei`). Jumping to memory locations pointed to by registers is supported with `r` and `ri` suffixed instructions (`jmpr`, `jmpeqr`, `jmpner`, `jmpgtr`, `jmpger`, `jmpltr`, `jmpler`, `jmpeqri`, `jmpneri`, `jmpgtri`, `jmpgeri`, `jmpltri`, `jmpleri`).
 
 ## Halting
 The `halt` instruction halts the CPU, shutting down the virtual machine, and displaying the contents of all registers and memory to the console.
