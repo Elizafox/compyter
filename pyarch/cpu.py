@@ -290,7 +290,6 @@ class CPU:
 
     def halt(self):
         print([hex(x) for x in self.registers])
-        print([hex(x) for x in self.memory])
         self.end_threads()
         quit()
 

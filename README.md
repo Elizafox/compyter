@@ -45,7 +45,7 @@ There are two base instructions: `load*` and `save*`. They perform various load/
 `jmp`, `jmpeq`, `jmpne`, `jmpgt`, `jmpge`, `jmplt`, `jmple` are all available, comparing two registers (except for `jmp` which is unconditional). Comparisons with immediates are available,suffixed with `i` (`jmpeqi`, `jmpnei`, `jmpgti`, `jmpgei`, `jmplti`, and `jmplei`). Jumping to memory locations pointed to by registers is supported with `r` and `ri` suffixed instructions (`jmpr`, `jmpeqr`, `jmpner`, `jmpgtr`, `jmpger`, `jmpltr`, `jmpler`, `jmpeqri`, `jmpneri`, `jmpgtri`, `jmpgeri`, `jmpltri`, `jmpleri`).
 
 ## Halting
-The `halt` instruction halts the CPU, shutting down the virtual machine, and displaying the contents of all registers and memory to the console.
+The `halt` instruction halts the CPU, shutting down the virtual machine, and displaying the contents of all registers to the console.
 
 ### Traps/interrupts
 There is one interrupt, but an interrupt controller is provided as a peripherial. The interrupt can be masked with the `dsi` instruction and unmasked with `eni`.
