@@ -71,6 +71,19 @@ The world's worst printer. When enabled, it prints whatever is written to `0xfff
 #### Timer
 A very basic timer connected to the interrupt controller (more on that later). It uses interrupt 0x20 on the controller. A duration in milliseconds can be written to `0xffffffc9` - `0xffffffcc` as a word. When each duration passes, an interrupt will fire. Setting the duration to 0 will disable the timer.
 
+#### RTC
+A very basic RTC.
+
+The memory layout is as follows:
+* `0xfffff937` - `0xfffff93a`: Year
+* `0xfffff93b`: Month
+* `0xfffff93c`: Day
+* `0xfffff93d`: Hour
+* `0xfffff93e`: Minute
+* `0xfffff93f`: Second
+* `0xfffff940` - `0xfffff943`: Microsecond
+* `0xfffff944`: Latch; when a non-zero value is written to this, the current time is latched into the registers.
+
 #### Keyboard
 A very basic keyboard controller. It uses interrupt 0x40 on the controller. Writing anything but zero to `0xffffffc1` - `0xffffffc4` enables it. It is disabled by writing 0 to the same address.
 

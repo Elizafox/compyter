@@ -1,5 +1,5 @@
 from . import cpu, memory
-from .hardware import printer, intc, timer, keyboard, storage, internet
+from .hardware import printer, intc, timer, keyboard, storage, internet, rtc
 from time import sleep
 
 class Machine:
@@ -13,6 +13,7 @@ class Machine:
         self.printer = printer.Printer(self.cpu, self.memory)
         self.storage = storage.Storage(self.cpu, self.memory)
         self.internet = internet.Internet(self.cpu, self.memory, self.intc)
+        self.rtc = rtc.RTC(self.cpu, self.memory)
 
         self.memory.attach_hardware(self.intc)
         self.memory.attach_hardware(self.timer)
@@ -20,6 +21,7 @@ class Machine:
         self.memory.attach_hardware(self.printer)
         self.memory.attach_hardware(self.storage)
         self.memory.attach_hardware(self.internet)
+        self.memory.attach_hardware(self.rtc)
 
     def run(self):
         while True:
