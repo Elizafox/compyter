@@ -2,6 +2,8 @@ from threading import RLock, Event
 from time import sleep
 
 class CPU:
+    CPU_VERSION = 0x1
+
     MAXVAL = (2 ** 32) - 1
 
     # Special regs
@@ -357,6 +359,9 @@ class CPU:
     def shri(self, reg1, val, reg2):
         self.registers[reg2] = self.registers[reg1] >> val
 
+    def cpuid(self):
+        self.registers[self.REG_RES] = self.CPU_VERSION
+
     # Instruction parameter types
     IA_NONE = 0
     IA_IMMED = 1
@@ -454,6 +459,7 @@ class CPU:
         ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x55
         ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x56
         ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x57
+        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x58
     ]
 
     def decode_next_instr(self):
