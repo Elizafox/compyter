@@ -55,6 +55,15 @@ class CPU:
 
             self.intr_event.clear()
 
+    @staticmethod
+    def _binary_to_signed(num):
+        # Convert a binary number to a signed representation
+        if num > 0x7fffffff:
+            # Negative
+            num -= 0x100000000
+
+        return num
+
     def jmp(self, addr):
         if addr < 0:
             print("Illegal address", addr)
@@ -95,7 +104,9 @@ class CPU:
         self.jmpnei(reg1, val, self.registers[reg2])
 
     def jmpgt(self, reg1, reg2, addr):
-        if self.registers[reg1] > self.registers[reg2]:
+        op1 = self._binary_to_signed(self.registers[reg1])
+        op2 = self._binary_to_signed(self.registers[reg2])
+        if op1 > op2:
             self.jmp(addr)
 
     def jmpgti(self, reg1, val, addr):
@@ -109,7 +120,9 @@ class CPU:
         self.jmpgti(reg1, val, self.registers[reg2])
 
     def jmpge(self, reg1, reg2, addr):
-        if self.registers[reg1] >= self.registers[reg2]:
+        op1 = self._binary_to_signed(self.registers[reg1])
+        op2 = self._binary_to_signed(self.registers[reg2])
+        if op1 >= op2:
             self.jmp(addr)
 
     def jmpgei(self, reg1, val, addr):
@@ -123,7 +136,9 @@ class CPU:
         self.jmpgei(reg1, val, self.registers[reg2])
 
     def jmplt(self, reg1, reg2, addr):
-        if self.registers[reg1] < self.registers[reg2]:
+        op1 = self._binary_to_signed(self.registers[reg1])
+        op2 = self._binary_to_signed(self.registers[reg2])
+        if op1 < op2:
             self.jmp(addr)
 
     def jmplti(self, reg1, val, addr):
@@ -137,7 +152,9 @@ class CPU:
         self.jmplti(reg1, val, self.registers[reg2])
 
     def jmple(self, reg1, reg2, addr):
-        if self.registers[reg1] <= self.registers[reg2]:
+        op1 = self._binary_to_signed(self.registers[reg1])
+        op2 = self._binary_to_signed(self.registers[reg2])
+        if op1 <= op2:
             self.jmp(addr)
 
     def jmplei(self, reg1, val, addr):
