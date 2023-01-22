@@ -1,12 +1,12 @@
 ComPyter
 ------
-This is a very basic CPU architecture in Python, complete with hardware and a hacked-together assembler.
+This is a very basic virtual machine in Python, complete with hardware and a hacked-together assembler.
 
 See the examples directory for working code examples that can be used with the assembler.
 
 Architecture description
 ========================
-This is a basic 32-bit RISC ISA. Execution begins at 0x0.
+This is a basic 32-bit RISC ISA. The ISA's name is ELISA (Elly's Lighwtweight ISA). Execution begins at 0x0. It is a two's complement architecture (like most modern architectures).
 
 ### Registers
 There are 32 32-bit registers. The first five registers are reserved:
