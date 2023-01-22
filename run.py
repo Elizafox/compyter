@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from pyarch import machine
+from compyter import machine
 
 m = machine.Machine("image")
 m.run()

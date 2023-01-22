@@ -1,4 +1,4 @@
-PyArch
+ComPyter
 ------
 This is a very basic CPU architecture in Python, complete with hardware and a hacked-together assembler.
 
