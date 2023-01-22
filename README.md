@@ -62,16 +62,16 @@ All traps are at fixed vectors; it is recommended to use a jmp instruction at th
 #### Waiting on interrupts
 It is possible to wait for an interrupt with the `wait` instruction, which will halt the CPU until an interrupt arrives and then jump to the handler.
 
-### Hardware
+## Hardware
 There are a variety of peripherials available, with more planned.
 
-#### Printer
+### Printer
 The world's worst printer. When enabled, it prints whatever is written to `0xffffffff` as ASCII to the console. It also stores the last character written at that address.
 
-#### Timer
+### Timer
 A very basic timer connected to the interrupt controller (more on that later). It uses interrupt 0x20 on the controller. A duration in milliseconds can be written to `0xffffffc9` - `0xffffffcc` as a word. When each duration passes, an interrupt will fire. Setting the duration to 0 will disable the timer.
 
-#### RTC
+### RTC
 A very basic RTC.
 
 The memory layout is as follows:
@@ -84,19 +84,19 @@ The memory layout is as follows:
 * `0xfffff940` - `0xfffff943`: Microsecond
 * `0xfffff944`: Latch; when a non-zero value is written to this, the current time is latched into the registers.
 
-#### Keyboard
+### Keyboard
 A very basic keyboard controller. It uses interrupt 0x40 on the controller. Writing anything but zero to `0xffffffc1` - `0xffffffc4` enables it. It is disabled by writing 0 to the same address.
 
 Keystrokes can be retrieved by reading from `0xffffffc5` - `0xffffffc8` when an interrupt fires.
 
-#### Storage
+### Storage
 A very basic storage controller. It features a 512-byte window for reading/writing, an offset register for moving the window, a read/write enable register, and a read-only size register.
 
 The emulated storage device is backed by a file. It should be a multiple of 512 bytes in size.
 
 The offset register is at `0xfffffdb0` - `0xfffffdb3` and is absolute (i.e. to change to the next window, you must add 512 to the register). The read/write register (0 for enable, 1 for disable) is at `0xfffffdb4` - `0xfffffdb7`. The size register is at `0xfffffdb8` - `0xfffffdbb`. The window is at `0xfffffdc0` - `0xffffffbf`.
 
-#### Internet
+### Internet
 A basic Internet controller wrapping the Berkeley sockets API. This is done for convenience as an entire IP stack would be painful to write.
 
 The registers are as follows:
@@ -115,57 +115,57 @@ The registers are as follows:
 In addition, there is a buffer:
 * `0xfffff9af` - `0xfffffdaf`: Buffer area.
 
-##### Commands
+#### Commands
 By writing a value to the command register, an operation is performed. Note that although the entire command register is checked, the command is only executed when a byte is written to `0xfffff96e` (the last byte of the register).
 
 Upon failure, the status register is set to a negative value, and the buffer will contain a detailed string about the error.
 
-###### NOP (`0x00`)
+##### NOP (`0x00`)
 No-op.
 
-###### SOCKET (`0x01`)
+##### SOCKET (`0x01`)
 Create a socket using the parameters in the IP version and protocol registers.
 
 The socket will be stored in the current handle register, which can be used to refer to the socket for all other operations.
 
-###### BIND (`0x02`)
+##### BIND (`0x02`)
 Bind the socket in the current handle register to the address in the address register and the port in the parameter register.
 
-###### CONNECT (`0x03`)
+##### CONNECT (`0x03`)
 Connect the socket in the current handle register to the address in the address register and the port in the parameter register.
 
-###### LISTEN (`0x04`)
+##### LISTEN (`0x04`)
 Set the socket in the current handle register to listen. The parameter register may be set to set the listen backlog.
 
-###### ACCEPT (`0x05`)
+##### ACCEPT (`0x05`)
 Accept a connection from the socket in the current handle register. The address register will contain the address of the client, and the parameter register will contain the port on the other end. The current handle register will be updated with the client's socket.
 
-###### CLOSE (`0x06`)
+##### CLOSE (`0x06`)
 Close the socket in the current handle register. This command always succeeds.
 
-###### SETSOCKOPT (`0x07`)
+##### SETSOCKOPT (`0x07`)
 This is not yet implemented.
 
-###### GETSOCKOPT (`0x08`)
+##### GETSOCKOPT (`0x08`)
 This is not yet implemented.
 
-###### RECV (`0x09`)
+##### RECV (`0x09`)
 Receive data on the socket in the current handle register. If the parameter register is non-zero, out-of-band data will be received. The received data will be stored in the buffer, and the buffer size register updated to reflect the amount of data received.
 
 Note that a zero-length read means the socket has been closed by the remote peer.
 
-###### SEND (`0x0a`)
+##### SEND (`0x0a`)
 Send data on the socket in the current handle register. The data is sourced from the buffer. Only the amount of bytes in the buffer length register will be transferred. If the parameter register is non-zero, out-of-band data will be sent.
 
 The actual number of bytes transferred will be stored in the parameter register.
 
-###### RECVMSG (`0x0b`)
+##### RECVMSG (`0x0b`)
 Receive data on the socket in the current handle register, but in a connectionless way (i.e. UDP). If the parameter register is non-zero, out-of-band data will be received. The received data will be stored in the buffer, and the buffer size register updated to reflect the amount of data received. The client address will be stored in the address register, and the client port will be stored in the parameter register.
 
-###### SENDMSG (`0x0c`)
+##### SENDMSG (`0x0c`)
 Send data on the socket in the current handle register, but in a connectionless way (i.e. UDP). The destination address is stored in the address register, and the destination port is stored in the parameter register. The data is sourced from the buffer. Only the amount of bytes in the buffer length register will be transferred. If the **status** register is non-zero, out-of-band data will be received.
 
-###### GETADDRINFO (`0x0d`)
+##### GETADDRINFO (`0x0d`)
 Resolve the ASCII hostname stored in the buffer of the length specified in the buffer length register into IP addresses. The IP addresses will be stored sequentially in the following format (the numbers are bytes):
 
 ```
@@ -179,10 +179,10 @@ IP type will be `0x1` for IPv4, and `0x2` for IPv6.
 
 Note that in the unlikely event there are more than 51 entries, they will be silently dropped (as the buffer will be exhausted).
 
-###### GETNAMEINFO (`0x0e`)
+##### GETNAMEINFO (`0x0e`)
 Resolve the IP stored in the address register to a hostname. The hostname will be stored in the buffer and the buffer length set to the length of the hostname. Although hostnames greater than 255 characters are a violation of RFC1035, they will be truncated if returned to the buffer size. This should not be a practical problem.
 
-###### ASYNC\_START (`0x0f`)
+##### ASYNC\_START (`0x0f`)
 Register the socket in the current handle register for interrupt notification (asynchronous behaviour).
 
 The parameter register will be read as a bitmask, with `0x1` denoting interest in notifications that a socket is ready for reading and `0x2` denoting interest in notifications that a socket is ready for writing.
@@ -191,13 +191,13 @@ When the socket is ready for reading and/or writing, the interrupt controller wi
 
 After an asynchronous operation is complete, an `ASYNC_DONE` command must be issued to unblock the controller and prepare for the next event (if any).
 
-###### ASYNC\_STOP (`0x10`)
+##### ASYNC\_STOP (`0x10`)
 Unregister the socket in the current handle register from interrupt notification. This must be done before the socket is closed.
 
-###### ASYNC\_DONE (`0x10`)
+##### ASYNC\_DONE (`0x10`)
 After an asynchronous operation is complete, this command must be issued to unblock the controller and prepare for the next event (if any).
 
-#### Interrupt controller
+### Interrupt controller
 This is by far the second most complex peripherial, after the Internet controller.
 
 Writing anything but zero to `0xffffffce` - `0xffffffd1` will enable the interrupt controller. Writing zero will disable it.
@@ -206,17 +206,17 @@ There are two registers: the interrupt number and interrupt vector.
 
 The interrupt number is stored at `0xffffffd2` - `0xffffffd5`. The address vector is stored at `0xffffffd6` - `0xffffffd0`.
 
-##### Adding a vector
+#### Adding a vector
 Writing anything to `0xffffffda` - `0xffffffdd` will add the vector stored in the interrupt number and vector to the interrupt table. When an interrupt fires, it will jump to that vector, provided the interrupt handler for the CPU is set to the handler for the interrupt controller.
 
-##### Removing a vector
+#### Removing a vector
 Writing anything non-zero to `0xffffffde` - `0xffffffe1` will delete the vector for interrupt number. The interrupt vector register is ignored. If the interrupt doesn't exist, this is a no-op.
 
-##### Retrieving a vector
+#### Retrieving a vector
 Writing anything non-zero to `0xffffffe2` - `0xffffffe5` will store the current vector for the interrupt number in the register. The interrupt vector register's contents are replaced. If no such interrupt exists, `0xffffffff` will be written instead.
 
-##### Triggering an interrupt
+#### Triggering an interrupt
 Writing anything non-zero to `0xffffffe6` - `0xffffffe9` will trigger the interrupt in the interrupt number register. The interrupt vector register is ignored.
 
-##### Installing the handler
+#### Installing the handler
 To use this interrupt controller, the handler `jmp FFFFFFEA` must be installed for the interrupt trap. This will redirect the request to the interrupt controller, which will `jmp` to the handler. If no handler is installed, it will `jmp` to 0 (effectively a reset). This behaviour may change.
