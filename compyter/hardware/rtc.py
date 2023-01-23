@@ -4,17 +4,17 @@ from datetime import datetime
 
 
 class RTC(Hardware):
-    ADDR_BEGIN = 0xfffff937
-    ADDR_END = 0xfffff94e
+    ADDR_BEGIN = 0xfffff837
+    ADDR_END = 0xfffff84e
 
-    REG_YEAR = 0x0      # 0xfffff937
-    REG_MONTH = 0x4     # 0xfffff93b
-    REG_DAY = 0x5       # 0xfffff93c
-    REG_HOUR = 0x6      # 0xfffff93d
-    REG_MIN = 0x7       # 0xfffff93e
-    REG_SEC = 0x8       # 0xfffff93f
-    REG_USEC = 0x9      # 0xfffff940
-    REG_LATCH = 0xd     # 0xfffff944
+    REG_YEAR = 0x0      # 0xfffff837
+    REG_MONTH = 0x4     # 0xfffff83b
+    REG_DAY = 0x5       # 0xfffff83c
+    REG_HOUR = 0x6      # 0xfffff83d
+    REG_MIN = 0x7       # 0xfffff83e
+    REG_SEC = 0x8       # 0xfffff83f
+    REG_USEC = 0x9      # 0xfffff840
+    REG_LATCH = 0xd     # 0xfffff844
 
     def __init__(self, cpu, memory):
         super().__init__(cpu, memory)

@@ -1,33 +1,46 @@
-# Entry
-jmp .start
+### Set up interrupt vectors
+loadwi 15 0
 
-# Interrupt vectors
-.intr_vec
-jmp FFFFFFEA
-halt
-halt
-halt
+# first vector
+strapr 15 .intr_vec
 
-# Program
+# Point to next vector
+addi 15 1 15
 
-# Set up interrupt controller
-.start
-savewi 20 FFFFFFD2
-savewi .timer_intr FFFFFFD6
-savebi 1 FFFFFFDA
-savewi 0 FFFFFFCE
+# Remaining vectors
+.write_vector
+strapr 15 .exit
+addi 15 1 15
+jmpgei 15 10 .write_done  # 16 vectors
+jmp .write_vector  # Next vector
 
-# Set up timer
-savewi 64 FFFFFFC9
+.write_done
 
-# Main loop
+eni  # Reenable interrupts
+
+
+### Set up interrupt controller
+savewi 20 FFFFFED2
+savewi .timer_intr FFFFFED6
+savebi 1 FFFFFEDA
+savewi 0 FFFFFECE
+
+### Set up timer
+savewi 64 FFFFFEC9
+
+### Main loop
 .loop
 nop
 jmplti A F .loop
 halt
 
-# Timer interrupt
+
+### Timer interrupt
 .timer_intr
 addi A 1 A
-savewi 0 FFFFFFCE
+savewi 0 FFFFFECE  # Re-enable interrupts
 ret
+
+### Interrupt vectors
+.intr_vec
+jmp FFFFFEEA

@@ -1,32 +1,39 @@
-# Entry
-jmp .start
+### Set up interrupt vectors
+loadwi 15 0
 
-# Interrupt vectors
-.intr_vec
-jmp FFFFFFEA
-halt
-halt
-halt
+# first vector
+strapr 15 .intr_vec
 
-# Program
+# Point to next vector
+addi 15 1 15
 
-# Set up interrupt controller
-.start
-savewi 40 FFFFFFD2
-savewi .keyboard_intr FFFFFFD6
-savebi 1 FFFFFFDA
-savewi 0 FFFFFFCE
+# Remaining vectors
+.write_vector
+strapr 15 .exit
+addi 15 1 15
+jmpgei 15 10 .write_done  # 16 vectors
+jmp .write_vector  # Next vector
 
-# Set up keyboard
-savewi 1 FFFFFFC1
+.write_done
 
-# Write enable the storage device
-savewi 1 FFFFFDB4
+eni  # Enable interrupts
 
-# Store the size of the storage device in E
-loadw E FFFFFDB8
+### Set up interrupt controller
+savewi 40 FFFFFED2
+savewi .keyboard_intr FFFFFED6
+savebi 1 FFFFFEDA
+savewi 0 FFFFFECE
 
-# Main loop
+### Set up keyboard
+savewi 1 FFFFFEC1
+
+### Write enable the storage device
+savewi 1 FFFFFCB4
+
+### Store the size of the storage device in E
+loadw E FFFFFCB8
+
+### Main loop
 .loop
 
 # Wait for interrupt
@@ -36,7 +43,7 @@ wait
 jmpeqi A 1 .exit
 
 # Write to disk at offset C (modulo 512)
-addi C FFFFFDC0 D
+addi C FFFFFCC0 D
 savebr B D
 
 # Compute next offset
@@ -47,7 +54,7 @@ jmplti C 200 .lt_200
 
 # Reset and shift the offset to the next 512-byte block
 loadwi C 0
-loadw D FFFFFDB0
+loadw D FFFFFCB0
 addi D 200 D
 
 # Did we overshoot?
@@ -58,22 +65,23 @@ loadwi D 0
 
 # Save the new offset to the storage offset register
 .save_offset
-savew D FFFFFDB0
+savew D FFFFFCB0
 
 .lt_200
 
 # And back around
 jmp .loop
 
-### Keyboard interrupt ###
+
+### Keyboard interrupt
 .keyboard_intr
 
 # Read keystroke
-loadw B FFFFFFC5
+loadw B FFFFFEC5
 
 # Print it if nonzero
 jmpeqi B 0 .return
-saveb B FFFFFFFF
+saveb B FFFFFEFF
 
 # Is the keystroke a tilde?
 jmpnei B 7E .return
@@ -84,9 +92,13 @@ loadwi A 1
 # Return
 .return
 # Reenable interrupts
-savewi 0 FFFFFFCE 0
+savewi 0 FFFFFECE 0
 ret
 
-# End program
+### End program
 .exit
 halt
+
+### Interrupt vector
+.intr_vec
+jmp FFFFFEEA

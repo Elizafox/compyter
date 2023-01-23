@@ -6,8 +6,8 @@ from threading import Thread
 class Timer(intc.InterruptHardware):
     INT_NUM = 32
 
-    ADDR_BEGIN = 0xffffffc9
-    ADDR_END = 0xffffffcc
+    ADDR_BEGIN = 0xfffffec9
+    ADDR_END = 0xfffffecc
 
     def __init__(self, cpu, memory, intc):
         super().__init__(cpu, memory, intc)

@@ -2,7 +2,7 @@ from threading import RLock, Event
 from time import sleep
 
 class CPU:
-    CPU_VERSION = 0x2
+    CPU_VERSION = 0x3
 
     MAXVAL = (2 ** 32) - 1
 
@@ -16,10 +16,10 @@ class CPU:
     REG_RESVD = 0x20  # Reserved for internal use
 
     # Traps
-    TRAP_INTR = 0x10  # Only one interrupt, but we use an interrupt controller
-    TRAP_ILL = 0x20
-    TRAP_DIV = 0x30
-    TRAP_DTRAP = 0x40
+    TRAP_INTR = 0xffffff00  # Only one interrupt, but we use an interrupt controller
+    TRAP_ILL = 0xffffff10
+    TRAP_DIV = 0xffffff20
+    TRAP_DTRAP = 0xffffff30
 
     def __init__(self, memory):
         self.memory = memory
@@ -28,7 +28,7 @@ class CPU:
         self.threads = []
         self.exit_event = Event()
         self.intr_event = Event()
-        self.intr_mask = False
+        self.intr_mask = True 
         self.intr_pending = False
 
     def register_thread(self, thread):
@@ -248,6 +248,7 @@ class CPU:
 
     def loadw(self, reg1, addr):
         if addr + 3 > self.MAXVAL:
+            print("Address overflow", hex(addr+3))
             self.trap(self.TRAP_ILL)
             return
 
@@ -264,6 +265,7 @@ class CPU:
 
     def savew(self, reg1, addr):
         if addr + 3 > self.MAXVAL:
+            print("Address overflow", hex(addr+3))
             self.trap(self.TRAP_ILL)
             return
 
@@ -382,6 +384,18 @@ class CPU:
     def cpuid(self):
         self.registers[self.REG_RES] = self.CPU_VERSION
 
+    def strapr(self, reg1, addr):
+        trap = self.registers[reg1]
+        write_addr = 0xffffff00 + (trap * 16)
+        self.savewi(0x19, write_addr)    # jmp
+        self.savewi(addr, write_addr+4)  # address
+        self.savewi(0, write_addr+8)     # unused
+        self.savewi(0, write_addr+12)    # unused
+
+    def strapi(self, val, addr):
+        self.registers[self.REG_RESVD] = val
+        self.strapr(self.REG_RESVD, addr)
+
     # Instruction parameter types
     IA_NONE = 0
     IA_IMMED = 1
@@ -481,6 +495,8 @@ class CPU:
         ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x57
         ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x58
         ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x59
+        ((IA_REG,   IA_ADDR,  IA_NONE),  strapr),   # 0x5a
+        ((IA_IMMED, IA_ADDR,  IA_NONE),  strapi),   # 0x5b
     ]
 
     def decode_next_instr(self):

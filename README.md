@@ -52,12 +52,12 @@ There is one interrupt, but an interrupt controller is provided as a peripherial
 
 To avoid races, all traps (including an interrupt) will disable interrupts. The `ret` statement will return back to the address in `REG_RET` and re-enable interrupts in a race-free way.
 
-All traps are at fixed vectors; it is recommended to use a jmp instruction at the vector to point to your actual handler:
+All traps are at fixed vectors starting at 0xfffffeff; it is recommended to use a jmp instruction at the vector to point to your actual handler:
 
-1) **TRAP_INTR**: Interrupt vector: 0x10
-2) **TRAP_ILL**: Illegal instruction vector: 0x20
-3) **TRAP_DIV**: Division by zero vector: 0x30
-4) **TRAP_DTRAP**: Double trap/fault vector: 0x40
+1) **TRAP_INTR**: Interrupt vector: 0xffffff00
+2) **TRAP_ILL**: Illegal instruction vector: 0xffffff10
+3) **TRAP_DIV**: Division by zero vector: 0xffffff20
+4) **TRAP_DTRAP**: Double trap/fault vector: 0xffffff30
 
 #### Waiting on interrupts
 It is possible to wait for an interrupt with the `wait` instruction, which will halt the CPU until an interrupt arrives and then jump to the handler.
@@ -66,57 +66,57 @@ It is possible to wait for an interrupt with the `wait` instruction, which will 
 There are a variety of peripherials available, with more planned.
 
 ### Printer
-The world's worst printer. When enabled, it prints whatever is written to `0xffffffff` as ASCII to the console. It also stores the last character written at that address.
+The world's worst printer. When enabled, it prints whatever is written to `0xfffffeff` as ASCII to the console. It also stores the last character written at that address.
 
 ### Timer
-A very basic timer connected to the interrupt controller (more on that later). It uses interrupt 0x20 on the controller. A duration in milliseconds can be written to `0xffffffc9` - `0xffffffcc` as a word. When each duration passes, an interrupt will fire. Setting the duration to 0 will disable the timer.
+A very basic timer connected to the interrupt controller (more on that later). It uses interrupt 0x20 on the controller. A duration in milliseconds can be written to `0xfffffec9` - `0xfffffecc` as a word. When each duration passes, an interrupt will fire. Setting the duration to 0 will disable the timer.
 
 ### RTC
 A very basic RTC.
 
 The memory layout is as follows:
-* `0xfffff937` - `0xfffff93a`: Year
-* `0xfffff93b`: Month
-* `0xfffff93c`: Day
-* `0xfffff93d`: Hour
-* `0xfffff93e`: Minute
-* `0xfffff93f`: Second
-* `0xfffff940` - `0xfffff943`: Microsecond
-* `0xfffff944`: Latch; when a non-zero value is written to this, the current time is latched into the registers.
+* `0xfffff837` - `0xfffff83a`: Year
+* `0xfffff83b`: Month
+* `0xfffff83c`: Day
+* `0xfffff83d`: Hour
+* `0xfffff83e`: Minute
+* `0xfffff83f`: Second
+* `0xfffff840` - `0xfffff843`: Microsecond
+* `0xfffff844`: Latch; when a non-zero value is written to this, the current time is latched into the registers.
 
 ### Keyboard
-A very basic keyboard controller. It uses interrupt 0x40 on the controller. Writing anything but zero to `0xffffffc1` - `0xffffffc4` enables it. It is disabled by writing 0 to the same address.
+A very basic keyboard controller. It uses interrupt 0x40 on the controller. Writing anything but zero to `0xfffffec1` - `0xfffffec4` enables it. It is disabled by writing 0 to the same address.
 
-Keystrokes can be retrieved by reading from `0xffffffc5` - `0xffffffc8` when an interrupt fires.
+Keystrokes can be retrieved by reading from `0xfffffec5` - `0xfffffec8` when an interrupt fires.
 
 ### Storage
 A very basic storage controller. It features a 512-byte window for reading/writing, an offset register for moving the window, a read/write enable register, and a read-only size register.
 
 The emulated storage device is backed by a file. It should be a multiple of 512 bytes in size.
 
-The offset register is at `0xfffffdb0` - `0xfffffdb3` and is absolute (i.e. to change to the next window, you must add 512 to the register). The read/write register (0 for enable, 1 for disable) is at `0xfffffdb4` - `0xfffffdb7`. The size register is at `0xfffffdb8` - `0xfffffdbb`. The window is at `0xfffffdc0` - `0xffffffbf`.
+The offset register is at `0xfffffcb0` - `0xfffffcb3` and is absolute (i.e. to change to the next window, you must add 512 to the register). The read/write register (0 for enable, 1 for disable) is at `0xfffffcb4` - `0xfffffcb7`. The size register is at `0xfffffcb8` - `0xfffffcbb`. The window is at `0xfffffcc0` - `0xfffffebf`.
 
 ### Internet
 A basic Internet controller wrapping the Berkeley sockets API. This is done for convenience as an entire IP stack would be painful to write.
 
 The registers are as follows:
 
-* `0xfffff94f` - `0xfffff95e`: Address register. Can store an IPv4 or IPv6 address.
-* `0xfffff95f` - `0xfffff962`: IP version register. Store `0x1` here for IPv4, or `0x2` for IPv6.
-* `0xfffff963` - `0xfffff966`: Protocol to use. Store `0x1` here for TCP, or `0x2` for UDP.
-* `0xfffff967` - `0xfffff96a`: Current handle. This is used to specify what socket is being used, or the socket returned from the socket command.
-* `0xfffff96b` - `0xfffff96e`: Command register. This is used to send commands to the controller.
-* `0xfffff96f` - `0xfffff972`: Parameters register. This is used to store or fetch parameters for commands.
-* `0xfffff973` - `0xfffff976`: Status register. This can be checked to see if a command succeeded or failed.
-* `0xfffff977` - `0xfffff97a`: Asynchronous operation register. This is used when an interrupt is fired to determine what operation should be performed on the given handle. More on this later.
-* `0xfffff97b` - `0xfffff97e`: Asynchronous handle register. This is used when an interrupt is fired to determine what handle needs to be serviced.
-* `0xfffff9ab` - `0xfffff9ae`: Buffer size register. Used to set the current buffer size. Can never be greater than 1024.
+* `0xfffff84f` - `0xfffff85e`: Address register. Can store an IPv4 or IPv6 address.
+* `0xfffff85f` - `0xfffff862`: IP version register. Store `0x1` here for IPv4, or `0x2` for IPv6.
+* `0xfffff863` - `0xfffff866`: Protocol to use. Store `0x1` here for TCP, or `0x2` for UDP.
+* `0xfffff867` - `0xfffff86a`: Current handle. This is used to specify what socket is being used, or the socket returned from the socket command.
+* `0xfffff86b` - `0xfffff86e`: Command register. This is used to send commands to the controller.
+* `0xfffff86f` - `0xfffff872`: Parameters register. This is used to store or fetch parameters for commands.
+* `0xfffff873` - `0xfffff876`: Status register. This can be checked to see if a command succeeded or failed.
+* `0xfffff877` - `0xfffff87a`: Asynchronous operation register. This is used when an interrupt is fired to determine what operation should be performed on the given handle. More on this later.
+* `0xfffff87b` - `0xfffff87e`: Asynchronous handle register. This is used when an interrupt is fired to determine what handle needs to be serviced.
+* `0xfffff8ab` - `0xfffff8ae`: Buffer size register. Used to set the current buffer size. Can never be greater than 1024.
 
 In addition, there is a buffer:
-* `0xfffff9af` - `0xfffffdaf`: Buffer area.
+* `0xfffff8af` - `0xfffffcaf`: Buffer area.
 
 #### Commands
-By writing a value to the command register, an operation is performed. Note that although the entire command register is checked, the command is only executed when a byte is written to `0xfffff96e` (the last byte of the register).
+By writing a value to the command register, an operation is performed. Note that although the entire command register is checked, the command is only executed when a byte is written to `0xfffff86e` (the last byte of the register).
 
 Upon failure, the status register is set to a negative value, and the buffer will contain a detailed string about the error.
 
@@ -200,23 +200,23 @@ After an asynchronous operation is complete, this command must be issued to unbl
 ### Interrupt controller
 This is by far the second most complex peripherial, after the Internet controller.
 
-Writing anything but zero to `0xffffffce` - `0xffffffd1` will enable the interrupt controller. Writing zero will disable it.
+Writing anything but zero to `0xfffffece` - `0xfffffed1` will enable the interrupt controller. Writing zero will disable it.
 
 There are two registers: the interrupt number and interrupt vector.
 
-The interrupt number is stored at `0xffffffd2` - `0xffffffd5`. The address vector is stored at `0xffffffd6` - `0xffffffd0`.
+The interrupt number is stored at `0xfffffed2` - `0xfffffed5`. The address vector is stored at `0xfffffed6` - `0xfffffed0`.
 
 #### Adding a vector
-Writing anything to `0xffffffda` - `0xffffffdd` will add the vector stored in the interrupt number and vector to the interrupt table. When an interrupt fires, it will jump to that vector, provided the interrupt handler for the CPU is set to the handler for the interrupt controller.
+Writing anything to `0xfffffeda` - `0xfffffedd` will add the vector stored in the interrupt number and vector to the interrupt table. When an interrupt fires, it will jump to that vector, provided the interrupt handler for the CPU is set to the handler for the interrupt controller.
 
 #### Removing a vector
-Writing anything non-zero to `0xffffffde` - `0xffffffe1` will delete the vector for interrupt number. The interrupt vector register is ignored. If the interrupt doesn't exist, this is a no-op.
+Writing anything non-zero to `0xfffffede` - `0xfffffee1` will delete the vector for interrupt number. The interrupt vector register is ignored. If the interrupt doesn't exist, this is a no-op.
 
 #### Retrieving a vector
-Writing anything non-zero to `0xffffffe2` - `0xffffffe5` will store the current vector for the interrupt number in the register. The interrupt vector register's contents are replaced. If no such interrupt exists, `0xffffffff` will be written instead.
+Writing anything non-zero to `0xfffffee2` - `0xfffffee5` will store the current vector for the interrupt number in the register. The interrupt vector register's contents are replaced. If no such interrupt exists, `0xffffffff` will be written instead.
 
 #### Triggering an interrupt
-Writing anything non-zero to `0xffffffe6` - `0xffffffe9` will trigger the interrupt in the interrupt number register. The interrupt vector register is ignored.
+Writing anything non-zero to `0xfffffee6` - `0xfffffee9` will trigger the interrupt in the interrupt number register. The interrupt vector register is ignored.
 
 #### Installing the handler
-To use this interrupt controller, the handler `jmp FFFFFFEA` must be installed for the interrupt trap. This will redirect the request to the interrupt controller, which will `jmp` to the handler. If no handler is installed, it will `jmp` to 0 (effectively a reset). This behaviour may change.
+To use this interrupt controller, the handler `jmp FFFFFEEA` must be installed for the interrupt trap. This will redirect the request to the interrupt controller, which will `jmp` to the handler. If no handler is installed, it will `jmp` to 0 (effectively a reset). This behaviour may change.

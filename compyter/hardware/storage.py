@@ -5,8 +5,8 @@ import os
 
 
 class Storage(Hardware):
-    ADDR_BEGIN = 0xfffffdb0
-    ADDR_END = 0xffffffbf
+    ADDR_BEGIN = 0xfffffcb0
+    ADDR_END = 0xfffffebf
 
     REG_OFFSET = 0x0
     REG_WRENABLE = 0x4
