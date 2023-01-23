@@ -2,7 +2,7 @@ from threading import RLock, Event
 from time import sleep
 
 class CPU:
-    CPU_VERSION = 0x1
+    CPU_VERSION = 0x2
 
     MAXVAL = (2 ** 32) - 1
 
@@ -332,6 +332,9 @@ class CPU:
     def dsi(self):
         self.intr_mask = True
 
+    def gti(self, reg1):
+        self.registers[reg1] = 1 if self.intr_mask else 0
+
     def wait(self):
         self.intr_event.wait()
 
@@ -462,21 +465,22 @@ class CPU:
         ((IA_NONE,  IA_NONE,  IA_NONE),  ret),      # 0x47
         ((IA_NONE,  IA_NONE,  IA_NONE),  eni),      # 0x48
         ((IA_NONE,  IA_NONE,  IA_NONE),  dsi),      # 0x49
-        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x4a
-        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x4b
-        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x4c
-        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x4d
-        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x4e
-        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x4f
-        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x50
-        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x51
-        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x52
-        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x53
-        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x54
-        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x55
-        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x56
-        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x57
-        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x58
+        ((IA_REG,   IA_NONE,  IA_NONE),  gti),      # 0x4a
+        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x4b
+        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x4c
+        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x4d
+        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x4e
+        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x4f
+        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x50
+        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x51
+        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x52
+        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x53
+        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x54
+        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x55
+        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x56
+        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x57
+        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x58
+        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x59
     ]
 
     def decode_next_instr(self):

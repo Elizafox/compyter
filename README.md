@@ -48,7 +48,7 @@ There are two base instructions: `load*` and `save*`. They perform various load/
 The `halt` instruction halts the CPU, shutting down the virtual machine, and displaying the contents of all registers to the console.
 
 ### Traps/interrupts
-There is one interrupt, but an interrupt controller is provided as a peripherial. The interrupt can be masked with the `dsi` instruction and unmasked with `eni`.
+There is one interrupt, but an interrupt controller is provided as a peripherial. The interrupt can be masked with the `dsi` instruction and unmasked with `eni`. The current mask state can be retrieved with `gti`.
 
 To avoid races, all traps (including an interrupt) will disable interrupts. The `ret` statement will return back to the address in `REG_RET` and re-enable interrupts in a race-free way.
 
