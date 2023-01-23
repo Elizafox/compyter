@@ -61,11 +61,11 @@ loadwi A 1
 savewi 0 FFFFFECE 0
 ret
 
-# End program
+### End program
 .exit
 halt
 
 
-# Interrupt vectors
+### Interrupt vectors
 .intr_vec
 jmp FFFFFEEA
