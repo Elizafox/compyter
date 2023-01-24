@@ -11,7 +11,7 @@ addi 15 1 15
 .write_vector
 strapr 15 .exit
 addi 15 1 15
-jmpgei 15 10 .write_done  # 16 vectors
+jmpgei 15 FF .write_done  # 256 vectors
 jmp .write_vector  # Next vector
 
 .write_done
@@ -19,13 +19,13 @@ jmp .write_vector  # Next vector
 eni  # Reenable interrupts
 
 # Set up interrupt controller
-savewi 40 FFFFFED2
-savewi .keyboard_intr FFFFFED6
-savebi 1 FFFFFEDA
-savewi 0 FFFFFECE
+savewi 40 FFFFEFD2
+savewi .keyboard_intr FFFFEFD6
+savebi 1 FFFFEFDA
+savewi 0 FFFFEFCE
 
 # Set up keyboard
-savewi 1 FFFFFEC1
+savewi 1 FFFFEFC1
 
 # Main loop
 .loop
@@ -43,11 +43,11 @@ jmp .loop
 .keyboard_intr
 
 # Read keystroke
-loadw B FFFFFEC5
+loadw B FFFFEFC5
 
 # Print it if nonzero
 jmpeqi B 0 .return
-saveb B FFFFFEFF
+saveb B FFFFEFFF
 
 # Is the keystroke a tilde?
 jmpnei B 7E .return
@@ -58,7 +58,7 @@ loadwi A 1
 # Return
 .return
 # Reenable interrupts
-savewi 0 FFFFFECE 0
+savewi 0 FFFFEFCE 0
 ret
 
 ### End program
@@ -68,4 +68,4 @@ halt
 
 ### Interrupt vectors
 .intr_vec
-jmp FFFFFEEA
+jmp FFFFEFEA

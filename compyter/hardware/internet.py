@@ -10,27 +10,27 @@ import errno
 class Internet(intc.InterruptHardware):
     INT_NUM = 192
 
-    ADDR_BEGIN = 0xfffff84f
-    ADDR_END =   0xfffffcaf
+    ADDR_BEGIN = 0xffffe94f
+    ADDR_END =   0xffffedaf
 
     MAXBUFSIZE = 0x400
 
     # Command registers
-    REG_ADDR = 0x0              # 0xfffff84f
-    REG_IP_VER = 0x10           # 0xfffff85f
-    REG_IP_PROTO = 0x14         # 0xfffff863
-    REG_HANDLE = 0x18           # 0xfffff867
-    REG_COMMAND = 0x1c          # 0xfffff86b
-    REG_PARAMS = 0x20           # 0xfffff86f
-    REG_STATUS = 0x24           # 0xfffff873
+    REG_ADDR = 0x0              # 0xffffe94f
+    REG_IP_VER = 0x10           # 0xffffe95f
+    REG_IP_PROTO = 0x14         # 0xffffe963
+    REG_HANDLE = 0x18           # 0xffffe967
+    REG_COMMAND = 0x1c          # 0xffffe96b
+    REG_PARAMS = 0x20           # 0xffffe96f
+    REG_STATUS = 0x24           # 0xffffe973
 
     # Asynchronous operation registers
-    REG_ASYNC_OP = 0x28         # 0xfffff877
-    REG_ASYNC_HANDLE = 0x2c     # 0xfffff87b
+    REG_ASYNC_OP = 0x28         # 0xffffe977
+    REG_ASYNC_HANDLE = 0x2c     # 0xffffe97b
 
     # Buffer
-    REG_BUFSIZE = 0x5c          # 0xfffff8ab
-    REG_BUFFER = 0x60           # 0xfffff8af
+    REG_BUFSIZE = 0x5c          # 0xffffe9ab
+    REG_BUFFER = 0x60           # 0xffffe9af
 
     # Command types
     CMD_NOP = 0x00

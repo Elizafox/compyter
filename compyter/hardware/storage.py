@@ -5,13 +5,13 @@ import os
 
 
 class Storage(Hardware):
-    ADDR_BEGIN = 0xfffffcb0
-    ADDR_END = 0xfffffebf
+    ADDR_BEGIN = 0xffffedb0
+    ADDR_END = 0xffffefbf
 
-    REG_OFFSET = 0x0
-    REG_WRENABLE = 0x4
-    REG_SIZE = 0x8
-    REG_STORAGE = 0x10
+    REG_OFFSET = 0x0    # 0xffffedb0
+    REG_WRENABLE = 0x4  # 0xffffedb4
+    REG_SIZE = 0x8      # 0xffffedb8
+    REG_STORAGE = 0x10  # 0xffffedbc
 
     def __init__(self, cpu, memory, filename="storage.img"):
         super().__init__(cpu, memory)

@@ -11,7 +11,7 @@ addi 15 1 15
 .write_vector
 strapr 15 .exit
 addi 15 1 15
-jmpgei 15 10 .write_done  # 16 vectors
+jmpgei 15 FF .write_done  # 256 vectors
 jmp .write_vector  # Next vector
 
 .write_done
@@ -21,55 +21,55 @@ eni  # Reenable interrupts
 #### Program
 
 ### Set up interrupt controller
-savewi C0 FFFFFED2
-savewi .async_intr FFFFFED6
-savebi 1 FFFFFEDA
-savewi 0 FFFFFECE
+savewi C0 FFFFEFD2
+savewi .async_intr FFFFEFD6
+savebi 1 FFFFEFDA
+savewi 0 FFFFEFCE
 
 ### Get socket
 # IPv4
 savewi 1 FFFFE95F
 
 # TCP
-savewi 1 FFFFF863
+savewi 1 FFFFE963
 
 # Open socket
-savewi 1 FFFFF86B
+savewi 1 FFFFE96B
 
 # Did we succeed?
-loadw A FFFFF873
+loadw A FFFFE973
 jmplti A 0 .exit
 
 # Load socket into B
-loadw B FFFFF867
+loadw B FFFFE967
 
 ### Bind
 # 0.0.0.0
-savewi 0 FFFFF84F
-savewi 0 FFFFF853
-savewi 0 FFFFF857
-savewi 0 FFFFF85B
+savewi 0 FFFFE94F
+savewi 0 FFFFE953
+savewi 0 FFFFE957
+savewi 0 FFFFE95B
 
 # Port 6969
-savewi 1B39 FFFFF86F
+savewi 1B39 FFFFE96F
 
 # Perform bind
-savewi 2 FFFFF86B
+savewi 2 FFFFE96B
 
 # Did we succeed?
-loadw A FFFFF873
+loadw A FFFFE973
 jmplti A 0 .exit
 
 ### Listen!
-savewi 4 FFFFF86B
+savewi 4 FFFFE96B
 
 # Did we succeed?
-loadw A FFFFF873
+loadw A FFFFE973
 jmplti A 0 .exit
 
 ### Set up interrupt event for listening
-savewi 1 FFFFF86F
-savewi F FFFFF86B
+savewi 1 FFFFE96F
+savewi F FFFFE96B
 
 ### Main loop
 .loop
@@ -84,45 +84,45 @@ jmp .loop
 .async_intr
 
 # Load the connection from the async handle reg
-loadw A FFFFF87B
+loadw A FFFFE97B
 
 # Store it in the main controller register
-savew A FFFFF867
+savew A FFFFE967
 
 # Accept the connection
-savewi 5 FFFFF86B
+savewi 5 FFFFE96B
 
 # Did it give us an error?
-loadw A FFFFF873
+loadw A FFFFE973
 jmpgti A 0 .async_intr_end
 
 # Copy "Hello world!\r\n" to the buffer
-savewi 68656C6C FFFFF9AF
-savewi 6F20776F FFFFF9B3
-savewi 726C6421 FFFFF9B7
-savewi 0D0A0000 FFFFF9BB
+savewi 68656C6C FFFFE9AF
+savewi 6F20776F FFFFE9B3
+savewi 726C6421 FFFFE9B7
+savewi 0D0A0000 FFFFE9BB
 
 # Save buffer length
-savewi E FFFFF8AB
+savewi E FFFFE9AB
 
 # Erase params before send
-savewi 0 FFFFF86F
+savewi 0 FFFFE96F
 
 # Perform send
-savewi A FFFFF86B
+savewi A FFFFE96B
 
 # Close the client connection
-savewi 6 FFFFF86B
+savewi 6 FFFFE96B
 
 # Restore the listening socket
-savew B FFFFF867
+savew B FFFFE967
 
 .async_intr_end
 # Reenable interrupts
-savewi 0 FFFFFECE 0
+savewi 0 FFFFEFCE 0
 
 # Set handler as done
-savewi 11 FFFFF86B
+savewi 11 FFFFE96B
 ret
 
 ### End program
@@ -131,4 +131,4 @@ halt
 
 ### Interrupt vector
 .intr_vec
-jmp FFFFFEEA
+jmp FFFFEFEA

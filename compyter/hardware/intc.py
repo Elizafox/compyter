@@ -17,17 +17,17 @@ class InterruptHardware(Hardware):
 
 
 class InterruptController(Hardware):
-    ADDR_BEGIN = 0xfffffece
-    ADDR_END = 0xffffffee
+    ADDR_BEGIN = 0xffffefce
+    ADDR_END = 0xffffeffe
 
-    INTC_MASK = 0x0        # 0xfffffece
-    INTC_REG_INTNUM = 0x4  # 0xfffffed2
-    INTC_REG_INTVEC = 0x8  # 0xfffffed6
-    INTC_ADD_INT = 0xc     # 0xfffffeda
-    INTC_DEL_INT = 0x10    # 0xfffffede
-    INTC_GET_INT = 0x14    # 0xfffffee2
-    INTC_TRIGGER = 0x18    # 0xfffffee6
-    INTC_JMP_INSTR = 0x1c  # 0xfffffeea
+    INTC_MASK = 0x0        # 0xffffefce
+    INTC_REG_INTNUM = 0x4  # 0xffffefd2
+    INTC_REG_INTVEC = 0x8  # 0xffffefd6
+    INTC_ADD_INT = 0xc     # 0xffffefda
+    INTC_DEL_INT = 0x10    # 0xffffefde
+    INTC_GET_INT = 0x14    # 0xffffefe2
+    INTC_TRIGGER = 0x18    # 0xffffefe6
+    INTC_JMP_INSTR = 0x1c  # 0xffffefea
 
     def __init__(self, cpu, memory):
         super().__init__(cpu, memory)

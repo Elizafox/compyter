@@ -2,7 +2,7 @@ class Memory:
     def __init__(self, memory=None):
         self.hardware_mmio = {}
 
-        self.trap_vectors = bytearray(256)
+        self.trap_vectors = bytearray(4096)
 
         if memory is None:
             self.memory = [0] * 255
@@ -25,9 +25,9 @@ class Memory:
         return len(self.memory)
 
     def __getitem__(self, item):
-        if item >= 0xffffff00:
+        if item >= 0xfffff000:
             # Trap vector, redirect
-            return self.trap_vectors[item - 0xffffff00]
+            return self.trap_vectors[item - 0xfffff000]
 
         if item in self.hardware_mmio:
             hardware = self.hardware_mmio[item]
@@ -36,9 +36,9 @@ class Memory:
         return self.memory[item]
 
     def __setitem__(self, item, value):
-        if item >= 0xffffff00:
+        if item >= 0xfffff000:
             # Trap vector, redirect
-            self.trap_vectors[item - 0xffffff00] = value & 0xff
+            self.trap_vectors[item - 0xfffff000] = value & 0xff
             return
 
         if item in self.hardware_mmio:

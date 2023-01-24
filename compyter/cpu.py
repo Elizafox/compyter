@@ -2,7 +2,7 @@ from threading import RLock, Event
 from time import sleep
 
 class CPU:
-    CPU_VERSION = 0x3
+    CPU_VERSION = 0x4
 
     MAXVAL = (2 ** 32) - 1
 
@@ -16,10 +16,10 @@ class CPU:
     REG_RESVD = 0x20  # Reserved for internal use
 
     # Traps
-    TRAP_INTR = 0xffffff00  # Only one interrupt, but we use an interrupt controller
-    TRAP_ILL = 0xffffff10
-    TRAP_DIV = 0xffffff20
-    TRAP_DTRAP = 0xffffff30
+    TRAP_INTR = 0xfffff000  # Only one interrupt, but we use an interrupt controller
+    TRAP_ILL = 0xfffff010
+    TRAP_DIV = 0xfffff020
+    TRAP_DTRAP = 0xfffff030
 
     def __init__(self, memory):
         self.memory = memory
@@ -386,7 +386,7 @@ class CPU:
 
     def strapr(self, reg1, addr):
         trap = self.registers[reg1]
-        write_addr = 0xffffff00 + (trap * 16)
+        write_addr = 0xfffff000 + (trap * 16)
         self.savewi(0x19, write_addr)    # jmp
         self.savewi(addr, write_addr+4)  # address
         self.savewi(0, write_addr+8)     # unused

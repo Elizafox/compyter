@@ -11,7 +11,7 @@ addi 15 1 15
 .write_vector
 strapr 15 .exit
 addi 15 1 15
-jmpgei 15 10 .write_done  # 16 vectors
+jmpgei 15 FF .write_done  # 256 vectors
 jmp .write_vector  # Next vector
 
 .write_done
@@ -20,13 +20,13 @@ eni  # Reenable interrupts
 
 
 ### Set up interrupt controller
-savewi 20 FFFFFED2
-savewi .timer_intr FFFFFED6
-savebi 1 FFFFFEDA
-savewi 0 FFFFFECE
+savewi 20 FFFFEFD2
+savewi .timer_intr FFFFEFD6
+savebi 1 FFFFEFDA
+savewi 0 FFFFEFCE
 
 ### Set up timer
-savewi 64 FFFFFEC9
+savewi 64 FFFFEFC9
 
 ### Main loop
 .loop
@@ -38,9 +38,9 @@ halt
 ### Timer interrupt
 .timer_intr
 addi A 1 A
-savewi 0 FFFFFECE  # Re-enable interrupts
+savewi 0 FFFFEFCE  # Re-enable interrupts
 ret
 
 ### Interrupt vectors
 .intr_vec
-jmp FFFFFEEA
+jmp FFFFEFEA

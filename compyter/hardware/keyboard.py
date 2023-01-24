@@ -8,8 +8,8 @@ import termios
 class Keyboard(intc.InterruptHardware):
     INT_NUM = 64
 
-    ADDR_BEGIN = 0xfffffec1
-    ADDR_END = 0xfffffec8
+    ADDR_BEGIN = 0xffffefc1
+    ADDR_END = 0xffffefc8
 
     INPUT_REG_ENABLE = 0x0
     INPUT_REG_CHAR = 0x4

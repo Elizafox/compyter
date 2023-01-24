@@ -3,8 +3,8 @@ import sys
 
 
 class Printer(Hardware):
-    ADDR_BEGIN = 0xfffffeff
-    ADDR_END = 0xfffffeff
+    ADDR_BEGIN = 0xffffefff
+    ADDR_END = 0xffffefff
 
     def __init__(self, cpu, memory):
         super().__init__(cpu, memory)
