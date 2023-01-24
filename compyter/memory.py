@@ -5,14 +5,17 @@ class Memory:
         self.trap_vectors = bytearray(4096)
 
         if memory is None:
-            self.memory = [0] * 255
+            self.memory = bytearray(4096)
         else:
             self.memory = memory
 
     @classmethod
     def load_file(cls, filename):
         with open(filename, 'rb') as f:
-            memory = list(f.read())
+            memory = bytearray(f.read())
+
+        if len(memory) < 4096:
+            memory.extend(0 for _ in range(4096 - len(memory)))
 
         return cls(memory)
 
