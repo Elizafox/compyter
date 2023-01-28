@@ -42,6 +42,11 @@ with open(filename, "r") as in_f:
             elif statement[0] == "zero":
                 out += b"\x00" * int(statement[1], base=16)
                 pc += int(statement[1], base=16)
+            elif statement[0] == "align":
+                align = int(statement[1], base=16)
+                align = align - (len(out) % align)
+                out += b"\x00" * align
+                pc += align
 
             continue
         elif line.startswith("."):

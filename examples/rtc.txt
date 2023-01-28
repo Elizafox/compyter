@@ -17,7 +17,7 @@ jmp .write_vector  # Next vector
 .write_done
 
 ### Initalise stack
-loadwi 1 .stack
+loadwi 21 .stack
 
 ### Print the year
 loadw A FFFFE937           	# RTC year
@@ -170,10 +170,10 @@ halt
 .print
 
 # Push to the stack
-addi 1 1 1
-savewr A 1
-addi 1 1 1
-savewr B 1
+addi 21 1 21
+savewr A 21
+addi 21 1 21
+savewr B 21
 
 .print_loop
 
@@ -195,10 +195,10 @@ jmp .print_loop
 .print_end
 
 # Pop off the stack
-loadwr B 1
-subi 1 1 1
-loadwr A 1
-subi 1 1 1
+loadwr B 21
+subi 21 1 21
+loadwr A 21
+subi 21 1 21
 
 # Return
 jmpr 9
@@ -211,20 +211,20 @@ jmpr 9
 .itoa
 
 # Push to the stack
-addi 1 1 1
-savewr A 1
-addi 1 1 1
-savewr B 1
-addi 1 1 1
-savewr C 1
-addi 1 1 1
-savewr D 1
-addi 1 1 1
-savewr E 1
-addi 1 1 1
-savewr F 1
-addi 1 1 1
-savewr 10 1
+addi 21 4 21
+savewr A 21
+addi 21 4 21
+savewr B 21
+addi 21 4 21
+savewr C 21
+addi 21 4 21
+savewr D 21
+addi 21 4 21
+savewr E 21
+addi 21 4 21
+savewr F 21
+addi 21 4 21
+savewr 10 21
 
 ## Zero the string
 # Save B
@@ -322,20 +322,20 @@ jmp .itoa_reverse_loop
 .itoa_done
 
 # Pop from the stack
-loadwr 10 1
-subi 1 1 1
-loadwr F 1
-subi 1 1 1
-loadwr E 1
-subi 1 1 1
-loadwr D 1
-subi 1 1 1
+loadwr 10 21
+subi 21 4 21
+loadwr F 21
+subi 21 4 21
+loadwr E 21
+subi 21 4 21
+loadwr D 21
+subi 21 4 21
 loadwr C 1
-subi 1 1 1
+subi 21 4 21
 loadwr B 1
-subi 1 1 1
+subi 21 4 21
 loadwr A 1
-subi 1 1 1
+subi 21 4 21
 
 # Jump back
 jmpr 9
@@ -348,9 +348,11 @@ jmp FFFFFEEA
 ### Stack
 .stack
 !zero 400
+!align 4
 .end_stack
 
 ### String location
 .string_loc
 !zero 10
+!align 4
 .end_string_loc
