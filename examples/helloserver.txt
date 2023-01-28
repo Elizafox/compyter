@@ -16,7 +16,8 @@ jmp .write_vector  # Next vector
 
 .write_done
 
-eni  # Reenable interrupts
+# Enabloe interrupts
+loadwi 25 00000001
 
 #### Program
 
@@ -123,7 +124,7 @@ savewi 0 FFFFEFCE 0
 
 # Set handler as done
 savewi 11 FFFFE96B
-ret
+rfe
 
 ### End program
 .exit

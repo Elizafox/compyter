@@ -1,35 +1,31 @@
+from .mmu import (MMU, PageFaultException, InvalidBasePointerException,
+                   PTEAccess)
+from .register import RegisterName, StatusBit, PrivilegeException, RegisterFile
 from threading import RLock, Event
 from time import sleep
 
+
 class CPU:
-    CPU_VERSION = 0x4
+    CPU_VERSION = 0x5
 
     MAXVAL = (2 ** 32) - 1
-
-    # Special regs
-    REG_PC = 0x0
-    REG_SP = 0x1
-    REG_RES = 0x2
-    REG_CARRY = 0x3
-    REG_RET = 0x4
-    REG_TRAP = 0x5
-    REG_RESVD = 0x20  # Reserved for internal use
 
     # Traps
     TRAP_INTR = 0xfffff000  # Only one interrupt, but we use an interrupt controller
     TRAP_ILL = 0xfffff010
     TRAP_DIV = 0xfffff020
-    TRAP_DTRAP = 0xfffff030
+    TRAP_PFAULT = 0xfffff030
+    TRAP_BBPTR = 0xfffff040
 
     def __init__(self, memory):
         self.memory = memory
-        self.registers = [0] * (self.REG_RESVD + 1)
+        self.registers = RegisterFile(self)
         self.cpu_lock = RLock()
         self.threads = []
         self.exit_event = Event()
-        self.intr_event = Event()
-        self.intr_mask = True 
+        self.trap_event = Event()
         self.intr_pending = False
+        self.mmu = MMU(self.memory, self)
 
     def register_thread(self, thread):
         self.threads.append(thread)
@@ -40,20 +36,21 @@ class CPU:
             thread.join(timeout=1)
 
     def trap(self, addr):
-        self.intr_event.set()
+        self.trap_event.set()
 
         with self.cpu_lock:
-            self.dsi()
+            self.registers.intr_old_bit = self.registers.intr_prev_bit
+            self.registers.intr_prev_bit = self.registers.intr_bit
+            self.registers.intr_bit = 0
 
-            if self.registers[self.REG_TRAP] and addr != self.TRAP_DTRAP:
-                # We've already trapped and the flag wasn't cleared!
-                return self.trap(self.TRAP_DTRAP)
+            self.registers.user_old_bit = self.registers.user_prev_bit
+            self.registers.user_prev_bit = self.registers.user_bit
+            self.registers.user_bit = 0
 
-            self.registers[self.REG_TRAP] = 1
-            self.registers[self.REG_RET] = self.registers[self.REG_PC]
+            self.registers[RegisterName.REG_RET] = self.registers[RegisterName.REG_PC]
             self.jmp(addr)
 
-            self.intr_event.clear()
+            self.trap_event.clear()
 
     @staticmethod
     def _binary_to_signed(num):
@@ -70,7 +67,7 @@ class CPU:
             self.trap(self.TRAP_ILL)
             return
 
-        self.registers[self.REG_PC] = addr
+        self.registers[RegisterName.REG_PC] = addr
 
     def jmpr(self, reg1):
         self.jmp(self.registers[reg1])
@@ -80,8 +77,8 @@ class CPU:
             self.jmp(addr)
 
     def jmpeqi(self, reg1, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.jmpeq(reg1, self.REG_RESVD, addr)
+        self.registers.rsvd = val
+        self.jmpeq(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpeqr(self, reg1, reg2, reg3):
         self.jmpeq(reg1, reg2, self.registers[reg3])
@@ -94,8 +91,8 @@ class CPU:
             self.jmp(addr)
 
     def jmpnei(self, reg1, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.jmpne(reg1, self.REG_RESVD, addr)
+        self.registers.rsvd = val
+        self.jmpne(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpner(self, reg1, reg2, reg3):
         self.jmpne(reg1, reg2, self.registers[reg3])
@@ -110,8 +107,8 @@ class CPU:
             self.jmp(addr)
 
     def jmpgti(self, reg1, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.jmpgt(reg1, self.REG_RESVD, addr)
+        self.registers.rsvd = val
+        self.jmpgt(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpgtr(self, reg1, reg2, reg3):
         self.jmpgt(reg1, reg2, self.registers[reg3])
@@ -126,8 +123,8 @@ class CPU:
             self.jmp(addr)
 
     def jmpgei(self, reg1, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.jmpge(reg1, self.REG_RESVD, addr)
+        self.registers[RegisterName.REG_RSVD] = val
+        self.jmpge(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpger(self, reg1, reg2, reg3):
         self.jmpge(reg1, reg2, self.registers[reg3])
@@ -142,8 +139,8 @@ class CPU:
             self.jmp(addr)
 
     def jmplti(self, reg1, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.jmplt(reg1, self.REG_RESVD, addr)
+        self.registers[RegisterName.REG_RSVD] = val
+        self.jmplt(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpltr(self, reg1, reg2, reg3):
         self.jmplt(reg1, reg2, self.registers[reg3])
@@ -158,8 +155,8 @@ class CPU:
             self.jmp(addr)
 
     def jmplei(self, reg1, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.jmple(reg1, self.REG_RESVD, addr)
+        self.registers[RegisterName.REG_RSVD] = val
+        self.jmple(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpler(self, reg1, reg2, reg3):
         self.jmple(reg1, reg2, self.registers[reg3])
@@ -170,29 +167,27 @@ class CPU:
     def add(self, reg1, reg2, reg3):
         result = self.registers[reg1] + self.registers[reg2]
         self.registers[reg3] = result & 0xffffffff
-        self.registers[self.REG_CARRY] = int(result > self.MAXVAL)
+        self.registers[RegisterName.REG_CARRY] = int(result > self.MAXVAL)
 
     def addi(self, reg1, val, reg2):
-        self.registers[self.REG_RESVD] = val
-        return self.add(reg1, self.REG_RESVD, reg2)
+        self.registers[RegisterName.REG_RSVD] = val
+        return self.add(reg1, RegisterName.REG_RSVD, reg2)
 
     def sub(self, reg1, reg2, reg3):
-        result = self.registers[reg1] - self.registers[reg2]
-        self.registers[reg3] = result & 0xffffffff
-        self.registers[self.REG_CARRY] = 0
+        return self.addi(reg1, ~self.registers[reg2] + 1, reg3)
 
     def subi(self, reg1, val, reg2):
-        self.registers[self.REG_RESVD] = val
-        return self.sub(reg1, self.REG_RESVD, reg2)
+        self.registers[RegisterName.REG_RSVD] = val
+        return self.sub(reg1, RegisterName.REG_RSVD, reg2)
 
     def mul(self, reg1, reg2, reg3):
         result = self.registers[reg1] * self.registers[reg2]
         self.registers[reg3] = result & 0xffffffff
-        self.registers[self.REG_CARRY] = int(result > self.MAXVAL)
+        self.registers[RegisterName.REG_CARRY] = int(result > self.MAXVAL)
 
     def muli(self, reg1, val, reg2):
-        self.registers[self.REG_RESVD] = val
-        return self.mul(reg1, self.REG_RESVD, reg2)
+        self.registers[RegisterName.REG_RSVD] = val
+        return self.mul(reg1, RegisterName.REG_RSVD, reg2)
 
     @staticmethod
     def _divmod(dividend, divisor):
@@ -226,11 +221,11 @@ class CPU:
 
         result = self._divmod(self.registers[reg1], self.registers[reg2])
         self.registers[reg3] = result[0] & 0xffffffff
-        self.registers[self.REG_CARRY] = 0
+        self.registers[RegisterName.REG_CARRY] = 0
 
     def divi(self, reg1, val, reg2):
-        self.registers[self.REG_RESVD] = val
-        return self.div(reg1, self.REG_RESVD, reg2)
+        self.registers[RegisterName.REG_RSVD] = val
+        return self.div(reg1, RegisterName.REG_RSVD, reg2)
 
     def mod(self, reg1, reg2, reg3):
         if self.registers[reg2] == 0:
@@ -240,22 +235,22 @@ class CPU:
 
         result = self._divmod(self.registers[reg1], self.registers[reg2])
         self.registers[reg3] = result[1] & 0xffffffff
-        self.registers[self.REG_CARRY] = 0
+        self.registers[RegisterName.REG_CARRY] = 0
 
     def modi(self, reg1, val, reg2):
-        self.registers[self.REG_RESVD] = val
-        return self.mod(reg1, self.REG_RESVD, reg2)
+        self.registers[RegisterName.REG_RSVD] = val
+        return self.mod(reg1, RegisterName.REG_RSVD, reg2)
 
-    def loadw(self, reg1, addr):
+    def loadw(self, reg1, addr, mask=PTEAccess.PTE_READ):
         if addr + 3 > self.MAXVAL:
             print("Address overflow", hex(addr+3))
             self.trap(self.TRAP_ILL)
             return
 
-        self.registers[reg1] = (self.memory[addr] << 24)
-        self.registers[reg1] |= (self.memory[addr + 1] << 16)
-        self.registers[reg1] |= (self.memory[addr + 2] << 8)
-        self.registers[reg1] |= self.memory[addr + 3]
+        self.registers[reg1] = (self.mmu.get_address(addr, mask)  << 24)
+        self.registers[reg1] |= (self.mmu.get_address(addr + 1, mask) << 16)
+        self.registers[reg1] |= (self.mmu.get_address(addr + 2, mask) << 8)
+        self.registers[reg1] |= self.mmu.get_address(addr + 3, mask)
 
     def loadwr(self, reg1, reg2):
         self.loadw(reg1, self.registers[reg2])
@@ -269,23 +264,24 @@ class CPU:
             self.trap(self.TRAP_ILL)
             return
 
-        self.memory[addr] = (self.registers[reg1] >> 24) & 0xff
-        self.memory[addr + 1] = (self.registers[reg1] >> 16) & 0xff
-        self.memory[addr + 2] = (self.registers[reg1] >> 8) & 0xff
-        self.memory[addr + 3] = (self.registers[reg1]) & 0xff
+        self.mmu.write_address(addr, (self.registers[reg1] >> 24) & 0xff)
+        self.mmu.write_address(addr + 1, (self.registers[reg1] >> 16) & 0xff)
+        self.mmu.write_address(addr + 2, (self.registers[reg1] >> 8) & 0xff)
+        self.mmu.write_address(addr + 3, (self.registers[reg1]) & 0xff)
+        self.mmu.clear_cache()
 
     def savewr(self, reg1, reg2):
         self.savew(reg1, self.registers[reg2])
 
     def savewi(self, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.savew(self.REG_RESVD, addr)
+        self.registers[RegisterName.REG_RSVD] = val
+        self.savew(RegisterName.REG_RSVD, addr)
 
     def savewri(self, val, reg1):
         self.savewi(val, self.registers[reg1])
 
     def loadb(self, reg1, addr):
-        self.registers[reg1] = self.memory[addr]
+        self.registers[reg1] = self.mmu.get_address(addr)
 
     def loadbr(self, reg1, reg2):
         self.loadb(reg1, self.registers[reg2])
@@ -294,14 +290,15 @@ class CPU:
         self.registers[reg1] = val & 0xff
 
     def saveb(self, reg1, addr):
-        self.memory[addr] = self.registers[reg1] & 0xff
+        self.mmu.write_address(addr, self.registers[reg1] & 0xff)
+        self.mmu.clear_cache()
 
     def savebr(self, reg1, reg2):
         self.saveb(reg1, self.registers[reg2])
 
     def savebi(self, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.saveb(self.REG_RESVD, addr)
+        self.registers[RegisterName.REG_RSVD] = val
+        self.saveb(RegisterName.REG_RSVD, addr)
 
     def savebri (self, val, reg1):
         self.savebi(val, self.registers[reg1])
@@ -310,35 +307,32 @@ class CPU:
         pass
 
     def halt(self):
-        print([hex(x) for x in self.registers])
+        print(self.registers.pretty_format())
         self.end_threads()
         quit()
 
     def intr(self):
-        if self.intr_mask:
+        if not self.registers.intr_bit:
             self.intr_pending = True
         else:
             self.intr_pending = False
             self.trap(self.TRAP_INTR)
 
-    def ret(self):
-        self.registers[self.REG_TRAP] = 0
-        self.registers[self.REG_PC] = self.registers[self.REG_RET]
-        self.eni()
+    def rfe(self):
+        self.registers.intr_bit = self.registers.intr_prev_bit
+        self.registers.intr_prev_bit = self.registers.intr_old_bit
 
-    def eni(self):
-        self.intr_mask = False
-        if self.intr_pending:
+        self.registers.user_bit = self.registers.user_prev_bit
+        self.registers.user_prev_bit = self.registers.user_old_bit
+
+        if self.intr_pending and self.registers.intr_bit:
+            # Execute any pending interrupts
             self.intr()
 
-    def dsi(self):
-        self.intr_mask = True
-
-    def gti(self, reg1):
-        self.registers[reg1] = 1 if self.intr_mask else 0
+        self.registers[RegisterName.REG_PC] = self.registers[RegisterName.REG_RET]
 
     def wait(self):
-        self.intr_event.wait()
+        self.trap_event.wait()
 
     def swap(self, reg1, reg2):
         temp = self.registers[reg1]
@@ -382,7 +376,7 @@ class CPU:
         self.registers[reg2] = self.registers[reg1] >> val
 
     def cpuid(self):
-        self.registers[self.REG_RES] = self.CPU_VERSION
+        self.registers[RegisterName.REG_RES] = self.CPU_VERSION
 
     def strapr(self, reg1, addr):
         trap = self.registers[reg1]
@@ -393,8 +387,8 @@ class CPU:
         self.savewi(0, write_addr+12)    # unused
 
     def strapi(self, val, addr):
-        self.registers[self.REG_RESVD] = val
-        self.strapr(self.REG_RESVD, addr)
+        self.registers[RegisterName.REG_RSVD] = val
+        self.strapr(RegisterName.REG_RSVD, addr)
 
     # Instruction parameter types
     IA_NONE = 0
@@ -476,48 +470,49 @@ class CPU:
         ((IA_REG,   IA_REG,   IA_REG),   jmpgeri),  # 0x44
         ((IA_NONE,  IA_NONE,  IA_NONE),  halt),     # 0x45
         ((IA_NONE,  IA_NONE,  IA_NONE),  intr),     # 0x46
-        ((IA_NONE,  IA_NONE,  IA_NONE),  ret),      # 0x47
-        ((IA_NONE,  IA_NONE,  IA_NONE),  eni),      # 0x48
-        ((IA_NONE,  IA_NONE,  IA_NONE),  dsi),      # 0x49
-        ((IA_REG,   IA_NONE,  IA_NONE),  gti),      # 0x4a
-        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x4b
-        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x4c
-        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x4d
-        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x4e
-        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x4f
-        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x50
-        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x51
-        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x52
-        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x53
-        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x54
-        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x55
-        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x56
-        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x57
-        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x58
-        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x59
-        ((IA_REG,   IA_ADDR,  IA_NONE),  strapr),   # 0x5a
-        ((IA_IMMED, IA_ADDR,  IA_NONE),  strapi),   # 0x5b
+        ((IA_NONE,  IA_NONE,  IA_NONE),  rfe),      # 0x47
+        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x48
+        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x49
+        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x4a
+        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x4b
+        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x4c
+        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x4d
+        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x4e
+        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x4f
+        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x50
+        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x51
+        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x52
+        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x53
+        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x54
+        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x55
+        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x56
+        ((IA_REG,   IA_ADDR,  IA_NONE),  strapr),   # 0x57
+        ((IA_IMMED, IA_ADDR,  IA_NONE),  strapi),   # 0x58
     ]
 
     def decode_next_instr(self):
         sleep(0)
         with self.cpu_lock:
             # Each instruction is four words
-            self.loadw(self.REG_RESVD, self.registers[self.REG_PC])
-            opcode = self.registers[self.REG_RESVD]
-            self.registers[self.REG_PC] += 4
+            self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
+                       PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
+            opcode = self.registers[RegisterName.REG_RSVD]
+            self.registers[RegisterName.REG_PC] += 4
 
-            self.loadw(self.REG_RESVD, self.registers[self.REG_PC])
-            op1 = self.registers[self.REG_RESVD]
-            self.registers[self.REG_PC] += 4
+            self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
+                       PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
+            op1 = self.registers[RegisterName.REG_RSVD]
+            self.registers[RegisterName.REG_PC] += 4
 
-            self.loadw(self.REG_RESVD, self.registers[self.REG_PC])
-            op2 = self.registers[self.REG_RESVD]
-            self.registers[self.REG_PC] += 4
+            self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
+                       PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
+            op2 = self.registers[RegisterName.REG_RSVD]
+            self.registers[RegisterName.REG_PC] += 4
 
-            self.loadw(self.REG_RESVD, self.registers[self.REG_PC])
-            op3 = self.registers[self.REG_RESVD]
-            self.registers[self.REG_PC] += 4
+            self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
+                       PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
+            op3 = self.registers[RegisterName.REG_RSVD]
+            self.registers[RegisterName.REG_PC] += 4
 
             if opcode >= len(self.INSTRS):
                 # Invalid opcode
@@ -529,16 +524,27 @@ class CPU:
             # This makes the instruction specification more flexible
             arglist = []
             instr_type, instr_fn = self.INSTRS[opcode]
-            #print(hex(self.registers[self.REG_PC] - 16), instr_fn.__name__, hex(op1), hex(op2), hex(op3))
+            #print(hex(self.registers[RegisterName.REG_PC] - 16), instr_fn.__name__, hex(op1), hex(op2), hex(op3))
             for (argtype, arg) in zip(instr_type, (op1, op2, op3)):
                 # Type check the argument
                 if argtype == self.IA_NONE:
                     continue
                 elif argtype == self.IA_REG:
-                    if arg > self.REG_RESVD:
+                    if arg > RegisterName.REG_RSVD.value:
                         print("Bad register", hex(arg))
                         return self.trap(self.TRAP_ILL)
 
                 arglist.append(arg)
 
-            instr_fn(self, *arglist)
+            try:
+                instr_fn(self, *arglist)
+            except PageFaultException as e:
+                self.registers[RegisterName.REG_VADDR] = e.addr
+                self.registers[RegisterName.REG_PC] -= 16  # Retry instruction
+                self.trap(self.TRAP_PFAULT)
+            except InvalidBasePointerException:
+                self.registers[RegisterName.REG_PC] -= 16  # Retry instruction
+                self.trap(self.TRAP_BBPTR)
+            except PrivilegeException:
+                self.registers[RegisterName.REG_PC] -= 16  # Retry instruction
+                self.trap(self.TRAP_ILL)

@@ -9,14 +9,16 @@ Architecture description
 This is a basic 32-bit RISC ISA. The ISA's name is ELISA (Elly's Lighwtweight ISA). Execution begins at 0x0. It is a two's complement architecture (like most modern architectures).
 
 ### Registers
-There are 32 32-bit registers. The first five registers are reserved:
+There are 32 32-bit general purpose registers. and eight special-purpose registers.
 
-1) **Register 0**: Program counter (**REG_PC**)
-2) **Register 1**: Stack pointer (**REG_SP**)
-3) **Register 2**: Result register (**REG_RES**)
-4) **Register 3**: Carry register (**REG_CARRY**)
-5) **Register 4**: Return address from interrupts (**REG_RET**)
-6) **Register 5**: Trap flag (whether or not we're in an interrupt handler) (**REG_TRAP**)
+1) **Register 0x20**: Program counter (**REG_PC**)
+2) **Register 0x21**: Stack pointer (**REG_SP**)
+3) **Register 0x22**: Result register (**REG_RES**)
+4) **Register 0x23**: Carry register (**REG_CARRY**)
+5) **Register 0x24**: Return address from interrupts (**REG_RET**)
+6) **Register 0x25**: Status register (**REG_STATUS**)
+7) **Register 0x26**: Virtual address register (**REG_VADDR**)
+8) **Register 0x27**: Base pointer register (**REG_BPTR**)
 
 ## Arithmetic
 `add`, `sub`, `mul`, `div`, `mod`, `shl`, `shr`, `and`, `or`, `xor`, and `not` are supported, using registers as operands and storing the result in a third register.
@@ -48,19 +50,43 @@ There are two base instructions: `load*` and `save*`. They perform various load/
 The `halt` instruction halts the CPU, shutting down the virtual machine, and displaying the contents of all registers to the console.
 
 ### Traps/interrupts
-There is one interrupt, but an interrupt controller is provided as a peripherial. The interrupt can be masked with the `dsi` instruction and unmasked with `eni`. The current mask state can be retrieved with `gti`.
+There is one interrupt, but an interrupt controller is provided as a peripherial. The interrupt can be masked, unmasked, and retrieved via the first bit of `REG_STATUS`. 
 
-To avoid races, all traps (including an interrupt) will disable interrupts. The `ret` statement will return back to the address in `REG_RET` and re-enable interrupts in a race-free way.
+To avoid races, all traps (including an interrupt) will disable interrupts. The processor will be put into kernel mode. The `rfe` statement will return back to the address in `REG_RET` and re-enable interrupts in a race-free way. It will also restore the previous interrupt status and user bit.
 
 All traps are at fixed vectors starting at 0xfffffeff; it is recommended to use a jmp instruction at the vector to point to your actual handler:
 
-1) **TRAP_INTR**: Interrupt vector: 0xffffff00
-2) **TRAP_ILL**: Illegal instruction vector: 0xffffff10
-3) **TRAP_DIV**: Division by zero vector: 0xffffff20
-4) **TRAP_DTRAP**: Double trap/fault vector: 0xffffff30
+1) **TRAP_INTR**: Interrupt vector: `0xffffff00`
+2) **TRAP_ILL**: Illegal instruction vector: `0xffffff10`
+3) **TRAP_DIV**: Division by zero vector: `0xffffff20`
+4) **TRAP_PFAULT**: Page fault vector: `0xffffff30`
+5) **TRAP_BBPTR**: Bad base pointer vector: `0xffffff40`
 
 #### Waiting on interrupts
 It is possible to wait for an interrupt with the `wait` instruction, which will halt the CPU until an interrupt arrives and then jump to the handler.
+
+## MMU
+The MMU uses a two-level page table. The MMU must be enabled by setting bit 31 of `REG_STATUS`. `REG_BPTR` must point to the root entries of the page table.
+
+If the MMU is enabled and the base pointer is invalid, **TRAP_BBPTR** is issued.
+
+### PTEs
+The page table has the following format for both levels:
+
+* **Bits 0-19**: address pointer. If the physical bit is set, this points to the physical address; otherwise, it points to the second level entry of the page table.
+* **Bits 21-23**: read, write, and execute bits, in that order. Sets the access bits for the page.
+* **Bit 24**: dirty bit. Sets if the page has been written to.
+* **Bit 25**: access bit. Sets if the page has been read from.
+* **Bit 26**: usable bit. Sets if the page is usable.
+* **Bit 27**: user bit. Sets if the page is user (1) or kernel (0).
+* **Bit 28**: physical bit. Sets if this entry points to the physical address, or the next level of page tables. This is ignored for the second level PTE.
+* **Bit 29**: present bit. Sets if the page is present. This is useful for operating systems.
+* **Bit 30-32**: reserved bits.
+
+### Traps
+When a page fault is encountered, `TRAP_PFAULT` is issued. The OS then can arrange for page-in or whatever. The virtual address will be stored in `REG_VADDR`.
+
+There are no double faults at present. This will be remedied in a future version.
 
 ## Hardware
 There are a variety of peripherials available, with more planned.

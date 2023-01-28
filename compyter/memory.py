@@ -28,6 +28,10 @@ class Memory:
         return len(self.memory)
 
     def __getitem__(self, item):
+        if isinstance(item, slice):
+            m = max(item.start, item.stop)
+            return bytearray(self[i] for i in range(*item.indices(m + 1)))
+
         if item >= 0xfffff000:
             # Trap vector, redirect
             return self.trap_vectors[item - 0xfffff000]
@@ -39,6 +43,13 @@ class Memory:
         return self.memory[item]
 
     def __setitem__(self, item, value):
+        if isinstance(item, slice):
+            m = max(item.start, item.stop)
+            for i, j in enumerate(range(*item.indices(m + 1))):
+                self[j] = value[i]
+
+            return
+
         if item >= 0xfffff000:
             # Trap vector, redirect
             self.trap_vectors[item - 0xfffff000] = value & 0xff

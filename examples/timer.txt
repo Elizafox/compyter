@@ -16,8 +16,8 @@ jmp .write_vector  # Next vector
 
 .write_done
 
-eni  # Reenable interrupts
-
+# Enable interrupts
+loadwi 25 00000001
 
 ### Set up interrupt controller
 savewi 20 FFFFEFD2
@@ -32,6 +32,10 @@ savewi 64 FFFFEFC9
 .loop
 nop
 jmplti A F .loop
+
+
+### Exit
+.exit
 halt
 
 
@@ -39,7 +43,7 @@ halt
 .timer_intr
 addi A 1 A
 savewi 0 FFFFEFCE  # Re-enable interrupts
-ret
+rfe
 
 ### Interrupt vectors
 .intr_vec

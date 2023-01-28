@@ -16,7 +16,8 @@ jmp .write_vector  # Next vector
 
 .write_done
 
-eni  # Reenable interrupts
+# Enable interrupts
+loadwi 25 00000001
 
 # Set up interrupt controller
 savewi 40 FFFFEFD2
@@ -59,7 +60,7 @@ loadwi A 1
 .return
 # Reenable interrupts
 savewi 0 FFFFEFCE 0
-ret
+rfe
 
 ### End program
 .exit
