@@ -135,6 +135,7 @@ class MMU:
         self.cpu = cpu
         self.vaddr = 0
 
+    @lru_cache
     def get_pte(self, addr):
         if self.baseptr + 4096 > 0xffffffff:
             raise InvalidBasePointerException(self.baseptr)
@@ -248,3 +249,4 @@ class MMU:
     def clear_cache(self):
         self.get_page.cache_clear()
         self.get_address.cache_clear()
+        self.get_pte.cache_clear()
