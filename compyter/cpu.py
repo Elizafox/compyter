@@ -6,7 +6,7 @@ from time import sleep
 
 
 class CPU:
-    CPU_VERSION = 0x5
+    CPU_VERSION = 0x6
 
     MAXVAL = (2 ** 32) - 1
 
@@ -438,68 +438,50 @@ class CPU:
         ((IA_REG,   IA_IMMED, IA_REG),   modi),     # 0x18
         ((IA_ADDR,  IA_NONE,  IA_NONE),  jmp),      # 0x19
         ((IA_REG,   IA_NONE,  IA_NONE),  jmpr),     # 0x1a
-        ((IA_REG,   IA_REG,   IA_ADDR),  jmpeq),    # 0x1b
-        ((IA_REG,   IA_REG,   IA_ADDR),  jmpne),    # 0x1c
-        ((IA_REG,   IA_REG,   IA_ADDR),  jmplt),    # 0x1d
-        ((IA_REG,   IA_REG,   IA_ADDR),  jmpgt),    # 0x1e
-        ((IA_REG,   IA_REG,   IA_ADDR),  jmple),    # 0x1f
-        ((IA_REG,   IA_REG,   IA_ADDR),  jmpge),    # 0x20
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpeqi),   # 0x21
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpnei),   # 0x22
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmplti),   # 0x23
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpgti),   # 0x24
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmplei),   # 0x25
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpgei),   # 0x26
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpeqi),   # 0x27
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpnei),   # 0x28
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmplti),   # 0x29
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpgti),   # 0x2a
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmplei),   # 0x2b
-        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpgei),   # 0x2c
-        ((IA_REG,   IA_REG,   IA_REG),   jmpeqr),   # 0x2d
-        ((IA_REG,   IA_REG,   IA_REG),   jmpner),   # 0x2e
-        ((IA_REG,   IA_REG,   IA_REG),   jmpltr),   # 0x2f
-        ((IA_REG,   IA_REG,   IA_REG),   jmpgtr),   # 0x30
-        ((IA_REG,   IA_REG,   IA_REG),   jmpler),   # 0x31
-        ((IA_REG,   IA_REG,   IA_REG),   jmpger),   # 0x32
-        ((IA_REG,   IA_REG,   IA_REG),   jmpeqr),   # 0x33
-        ((IA_REG,   IA_REG,   IA_REG),   jmpner),   # 0x34
-        ((IA_REG,   IA_REG,   IA_REG),   jmpltr),   # 0x35
-        ((IA_REG,   IA_REG,   IA_REG),   jmpgtr),   # 0x36
-        ((IA_REG,   IA_REG,   IA_REG),   jmpler),   # 0x37
-        ((IA_REG,   IA_REG,   IA_REG),   jmpger),   # 0x38
-        ((IA_REG,   IA_REG,   IA_REG),   jmpeqri),  # 0x39
-        ((IA_REG,   IA_REG,   IA_REG),   jmpneri),  # 0x3a
-        ((IA_REG,   IA_REG,   IA_REG),   jmpltr),   # 0x3b
-        ((IA_REG,   IA_REG,   IA_REG),   jmpgtri),  # 0x3c
-        ((IA_REG,   IA_REG,   IA_REG),   jmpleri),  # 0x3d
-        ((IA_REG,   IA_REG,   IA_REG),   jmpgeri),  # 0x3e
-        ((IA_REG,   IA_REG,   IA_REG),   jmpeqri),  # 0x3f
-        ((IA_REG,   IA_REG,   IA_REG),   jmpneri),  # 0x40
-        ((IA_REG,   IA_REG,   IA_REG),   jmpltri),  # 0x41
-        ((IA_REG,   IA_REG,   IA_REG),   jmpgtri),  # 0x42
-        ((IA_REG,   IA_REG,   IA_REG),   jmpleri),  # 0x43
-        ((IA_REG,   IA_REG,   IA_REG),   jmpgeri),  # 0x44
-        ((IA_NONE,  IA_NONE,  IA_NONE),  halt),     # 0x45
-        ((IA_NONE,  IA_NONE,  IA_NONE),  intr),     # 0x46
-        ((IA_NONE,  IA_NONE,  IA_NONE),  rfe),      # 0x47
-        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x48
-        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x49
-        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x4a
-        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x4b
-        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x4c
-        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x4d
-        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x4e
-        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x4f
-        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x50
-        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x51
-        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x52
-        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x53
-        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x54
-        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x55
-        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x56
-        ((IA_REG,   IA_ADDR,  IA_NONE),  strapr),   # 0x57
-        ((IA_IMMED, IA_ADDR,  IA_NONE),  strapi),   # 0x58
+        ((IA_REG,   IA_REG,   IA_ADDR),  jmplt),    # 0x1b
+        ((IA_REG,   IA_REG,   IA_ADDR),  jmpgt),    # 0x1c
+        ((IA_REG,   IA_REG,   IA_ADDR),  jmple),    # 0x1d
+        ((IA_REG,   IA_REG,   IA_ADDR),  jmpge),    # 0x1e
+        ((IA_REG,   IA_REG,   IA_ADDR),  jmpeq),    # 0x1f
+        ((IA_REG,   IA_REG,   IA_ADDR),  jmpne),    # 0x20
+        ((IA_REG,   IA_IMMED, IA_ADDR),  jmplti),   # 0x21
+        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpgti),   # 0x22
+        ((IA_REG,   IA_IMMED, IA_ADDR),  jmplei),   # 0x23
+        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpgei),   # 0x24
+        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpeqi),   # 0x25
+        ((IA_REG,   IA_IMMED, IA_ADDR),  jmpnei),   # 0x26
+        ((IA_REG,   IA_REG,   IA_REG),   jmpltr),   # 0x27
+        ((IA_REG,   IA_REG,   IA_REG),   jmpgtr),   # 0x28
+        ((IA_REG,   IA_REG,   IA_REG),   jmpler),   # 0x29
+        ((IA_REG,   IA_REG,   IA_REG),   jmpger),   # 0x2a
+        ((IA_REG,   IA_REG,   IA_REG),   jmpeqr),   # 0x2b
+        ((IA_REG,   IA_REG,   IA_REG),   jmpner),   # 0x2c
+        ((IA_REG,   IA_REG,   IA_REG),   jmpltri),  # 0x2d
+        ((IA_REG,   IA_REG,   IA_REG),   jmpgtri),  # 0x2e
+        ((IA_REG,   IA_REG,   IA_REG),   jmpleri),  # 0x2f
+        ((IA_REG,   IA_REG,   IA_REG),   jmpgeri),  # 0x30
+        ((IA_REG,   IA_REG,   IA_REG),   jmpeqri),  # 0x31
+        ((IA_REG,   IA_REG,   IA_REG),   jmpneri),  # 0x32
+        ((IA_NONE,  IA_NONE,  IA_NONE),  halt),     # 0x33
+        ((IA_NONE,  IA_NONE,  IA_NONE),  intr),     # 0x34
+        ((IA_NONE,  IA_NONE,  IA_NONE),  rfe),      # 0x35
+        ((IA_NONE,  IA_NONE,  IA_NONE),  wait),     # 0x36
+        ((IA_REG,   IA_REG,   IA_NONE),  swap),     # 0x37
+        ((IA_REG,   IA_REG,   IA_NONE),  copy),     # 0x38
+        ((IA_REG,   IA_REG,   IA_REG),   and_),     # 0x39
+        ((IA_REG,   IA_REG,   IA_REG),   or_),      # 0x3a
+        ((IA_REG,   IA_REG,   IA_REG),   xor_),     # 0x3b
+        ((IA_REG,   IA_IMMED, IA_REG),   andi),     # 0x3c
+        ((IA_REG,   IA_IMMED, IA_REG),   ori),      # 0x3d
+        ((IA_REG,   IA_IMMED, IA_REG),   xori),     # 0x3e
+        ((IA_REG,   IA_REG,   IA_NONE),  not_),     # 0x3f
+        ((IA_REG,   IA_REG,   IA_REG),   shl),      # 0x40
+        ((IA_REG,   IA_REG,   IA_REG),   shr),      # 0x41
+        ((IA_REG,   IA_IMMED, IA_REG),   shli),     # 0x42
+        ((IA_REG,   IA_IMMED, IA_REG),   shri),     # 0x43
+        ((IA_NONE,  IA_NONE,  IA_NONE),  cpuid),    # 0x44
+        ((IA_REG,   IA_ADDR,  IA_NONE),  strapr),   # 0x45
+        ((IA_IMMED, IA_ADDR,  IA_NONE),  strapi),   # 0x46
     ]
 
     def decode_next_instr(self):
