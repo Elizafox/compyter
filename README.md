@@ -54,6 +54,8 @@ There is one interrupt, but an interrupt controller is provided as a peripherial
 
 To avoid races, all traps (including an interrupt) will disable interrupts. The processor will be put into kernel mode. The `rfe` statement will return back to the address in `REG_RET` and re-enable interrupts in a race-free way. It will also restore the previous interrupt status and user bit.
 
+If the trap or interrupt handler generates a fault (i.e. before the `rfe` instruction), the double fault handler will be called. If there is another fault, the emulator will halt.
+
 All traps are at fixed vectors starting at 0xfffffeff; it is recommended to use a jmp instruction at the vector to point to your actual handler:
 
 1) **TRAP_INTR**: Interrupt vector: `0xffffff00`
@@ -61,6 +63,7 @@ All traps are at fixed vectors starting at 0xfffffeff; it is recommended to use 
 3) **TRAP_DIV**: Division by zero vector: `0xffffff20`
 4) **TRAP_PFAULT**: Page fault vector: `0xffffff30`
 5) **TRAP_BBPTR**: Bad base pointer vector: `0xffffff40`
+6) **TRAP_DFAULT**: Double fault vector: `0xffffff50`
 
 #### Waiting on interrupts
 It is possible to wait for an interrupt with the `wait` instruction, which will halt the CPU until an interrupt arrives and then jump to the handler.
@@ -85,8 +88,6 @@ The page table has the following format for both levels:
 
 ### Traps
 When a page fault is encountered, `TRAP_PFAULT` is issued. The OS then can arrange for page-in or whatever. The virtual address will be stored in `REG_VADDR`.
-
-There are no double faults at present. This will be remedied in a future version.
 
 ## Hardware
 There are a variety of peripherials available, with more planned.

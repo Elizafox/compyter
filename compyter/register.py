@@ -48,8 +48,9 @@ class RegisterName(enum.IntEnum):
     REG_BPTR = 0x27     # Base pointer (privileged)
 
     # Reserved for emulator usage
-    REG_RSVD = 0x28    # Reserved for internal use
-    REG_LAST = 0x29
+    REG_FC = 0x28      # Fault counter
+    REG_RSVD = 0x29    # Reserved for internal use
+    REG_LAST = 0x2a
 
 
 class StatusBit(enum.IntFlag):
@@ -72,6 +73,10 @@ class RegisterFile:
                  RegisterName.REG_VADDR,
                  RegisterName.REG_BPTR)
     
+    # Disallowed registers
+    DIS_REGS = (RegisterName.REG_FC,
+                RegisterName.REG_RSVD)
+
     def __init__(self, cpu):
         self.registers = [0] * (RegisterName.REG_LAST)
         self.cpu = cpu

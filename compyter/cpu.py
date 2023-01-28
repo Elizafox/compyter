@@ -16,6 +16,7 @@ class CPU:
     TRAP_DIV = 0xfffff020
     TRAP_PFAULT = 0xfffff030
     TRAP_BBPTR = 0xfffff040
+    TRAP_DFAULT = 0xffff050
 
     def __init__(self, memory):
         self.memory = memory
@@ -46,6 +47,14 @@ class CPU:
             self.registers.user_old_bit = self.registers.user_prev_bit
             self.registers.user_prev_bit = self.registers.user_bit
             self.registers.user_bit = 0
+
+            self.registers[RegisterName.REG_FC] += 1
+            if self.registers[RegisterName.REG_FC] == 2:
+                self.trap(self.TRAP_DFAULT)
+                return
+            elif self.registers[RegisterName.REG_FC] == 3:
+                print("Triple fault detected!")
+                self.halt()
 
             self.registers[RegisterName.REG_RET] = self.registers[RegisterName.REG_PC]
             self.jmp(addr)
@@ -123,7 +132,7 @@ class CPU:
             self.jmp(addr)
 
     def jmpgei(self, reg1, val, addr):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         self.jmpge(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpger(self, reg1, reg2, reg3):
@@ -139,7 +148,7 @@ class CPU:
             self.jmp(addr)
 
     def jmplti(self, reg1, val, addr):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         self.jmplt(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpltr(self, reg1, reg2, reg3):
@@ -155,7 +164,7 @@ class CPU:
             self.jmp(addr)
 
     def jmplei(self, reg1, val, addr):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         self.jmple(reg1, RegisterName.REG_RSVD, addr)
 
     def jmpler(self, reg1, reg2, reg3):
@@ -170,14 +179,14 @@ class CPU:
         self.registers[RegisterName.REG_CARRY] = int(result > self.MAXVAL)
 
     def addi(self, reg1, val, reg2):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         return self.add(reg1, RegisterName.REG_RSVD, reg2)
 
     def sub(self, reg1, reg2, reg3):
         return self.addi(reg1, ~self.registers[reg2] + 1, reg3)
 
     def subi(self, reg1, val, reg2):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         return self.sub(reg1, RegisterName.REG_RSVD, reg2)
 
     def mul(self, reg1, reg2, reg3):
@@ -186,7 +195,7 @@ class CPU:
         self.registers[RegisterName.REG_CARRY] = int(result > self.MAXVAL)
 
     def muli(self, reg1, val, reg2):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         return self.mul(reg1, RegisterName.REG_RSVD, reg2)
 
     @staticmethod
@@ -224,7 +233,7 @@ class CPU:
         self.registers[RegisterName.REG_CARRY] = 0
 
     def divi(self, reg1, val, reg2):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         return self.div(reg1, RegisterName.REG_RSVD, reg2)
 
     def mod(self, reg1, reg2, reg3):
@@ -238,7 +247,7 @@ class CPU:
         self.registers[RegisterName.REG_CARRY] = 0
 
     def modi(self, reg1, val, reg2):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         return self.mod(reg1, RegisterName.REG_RSVD, reg2)
 
     def loadw(self, reg1, addr, mask=PTEAccess.PTE_READ):
@@ -274,7 +283,7 @@ class CPU:
         self.savew(reg1, self.registers[reg2])
 
     def savewi(self, val, addr):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         self.savew(RegisterName.REG_RSVD, addr)
 
     def savewri(self, val, reg1):
@@ -297,7 +306,7 @@ class CPU:
         self.saveb(reg1, self.registers[reg2])
 
     def savebi(self, val, addr):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         self.saveb(RegisterName.REG_RSVD, addr)
 
     def savebri (self, val, reg1):
@@ -324,6 +333,9 @@ class CPU:
 
         self.registers.user_bit = self.registers.user_prev_bit
         self.registers.user_prev_bit = self.registers.user_old_bit
+
+        if self.registers[RegisterName.REG_FC] > 0:
+            self.registers[RegisterName.REG_FC] -= 1
 
         if self.intr_pending and self.registers.intr_bit:
             # Execute any pending interrupts
@@ -387,7 +399,7 @@ class CPU:
         self.savewi(0, write_addr+12)    # unused
 
     def strapi(self, val, addr):
-        self.registers[RegisterName.REG_RSVD] = val
+        self.registers.rsvd = val
         self.strapr(RegisterName.REG_RSVD, addr)
 
     # Instruction parameter types
@@ -496,22 +508,22 @@ class CPU:
             # Each instruction is four words
             self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
                        PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
-            opcode = self.registers[RegisterName.REG_RSVD]
+            opcode = self.registers.rsvd
             self.registers[RegisterName.REG_PC] += 4
 
             self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
                        PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
-            op1 = self.registers[RegisterName.REG_RSVD]
+            op1 = self.registers.rsvd
             self.registers[RegisterName.REG_PC] += 4
 
             self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
                        PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
-            op2 = self.registers[RegisterName.REG_RSVD]
+            op2 = self.registers.rsvd
             self.registers[RegisterName.REG_PC] += 4
 
             self.loadw(RegisterName.REG_RSVD, self.registers[RegisterName.REG_PC],
                        PTEAccess.PTE_READ | PTEAccess.PTE_EXECUTE)
-            op3 = self.registers[RegisterName.REG_RSVD]
+            op3 = self.registers.rsvd
             self.registers[RegisterName.REG_PC] += 4
 
             if opcode >= len(self.INSTRS):
@@ -530,7 +542,7 @@ class CPU:
                 if argtype == self.IA_NONE:
                     continue
                 elif argtype == self.IA_REG:
-                    if arg > RegisterName.REG_RSVD.value:
+                    if arg in self.registers.DIS_REGS:
                         print("Bad register", hex(arg))
                         return self.trap(self.TRAP_ILL)
 
