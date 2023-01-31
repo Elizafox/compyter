@@ -1,161 +1,161 @@
 ### Set up interrupt vectors
-loadwi 15 0
+loadwi $0 0
 
 # first vector
-strapr 15 .intr_vec
+strapr $0 .intr_vec
 
 # Point to next vector
-addi 15 1 15
+addi $0 1 $0
 
 # Remaining vectors
 .write_vector
-strapr 15 .exit
-addi 15 1 15
-jmpgei 15 FF .write_done  # 256 vectors
+strapr $0 .exit
+addi $0 1 $0
+jmpgei $0 0xFF .write_done  # 256 vectors
 jmp .write_vector  # Next vector
 
 .write_done
 
 ### Initalise stack
-loadwi 21 .stack
+loadwi $sp .stack
 
 ### Print the year
-loadw A FFFFE937           	# RTC year
-loadwi B .string_loc
-loadwi 9 .return_itoa_year	# Return address
+loadw $0 &FFFFE937           	# RTC year
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_year	# Return address
 jmp .itoa
 .return_itoa_year
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_year
+loadwi $0 .string_loc
+loadwi $9 .return_print_year
 jmp .print
 .return_print_year
 
 ## Print a dash
-loadwi A .string_loc
-savewi 2D000000 .string_loc
-loadwi 9 .return_print_year_dash
+loadwi $0 .string_loc
+savewi 0x2D000000 .string_loc
+loadwi $9 .return_print_year_dash
 jmp .print
 .return_print_year_dash
 
 ### Print the month
-loadb A FFFFE93B           	# RTC month
-loadwi B .string_loc
-loadwi 9 .return_itoa_month	# Return address
+loadb $0 &FFFFE93B           	# RTC month
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_month	# Return address
 jmp .itoa
 .return_itoa_month
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_month
+loadwi $0 .string_loc
+loadwi $9 .return_print_month
 jmp .print
 .return_print_month
 
 ## Print a dash
-loadwi A .string_loc
-savewi 2D000000 .string_loc
-loadwi 9 .return_print_month_dash
+loadwi $0 .string_loc
+savewi 0x2D000000 .string_loc
+loadwi $9 .return_print_month_dash
 jmp .print
 .return_print_month_dash
 
 ### Print the day
-loadb A FFFFE93C           	# RTC day
-loadwi B .string_loc
-loadwi 9 .return_itoa_day	# Return address
+loadb $0 &FFFFE93C           	# RTC day
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_day	# Return address
 jmp .itoa
 .return_itoa_day
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_day
+loadwi $0 .string_loc
+loadwi $9 .return_print_day
 jmp .print
 .return_print_day
 
 ## Print a space
-loadwi A .string_loc
-savewi 20000000 .string_loc
-loadwi 9 .return_print_day_space
+loadwi $0 .string_loc
+savewi 0x20000000 .string_loc
+loadwi $9 .return_print_day_space
 jmp .print
 .return_print_day_space
 
 ### Print the hour
-loadb A FFFFE93D           	# RTC hour
-loadwi B .string_loc
-loadwi 9 .return_itoa_hour	# Return address
+loadb $0 &FFFFE93D           	# RTC hour
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_hour	# Return address
 jmp .itoa
 .return_itoa_hour
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_hour
+loadwi $0 .string_loc
+loadwi $9 .return_print_hour
 jmp .print
 .return_print_hour
 
 ## Print a colon
-loadwi A .string_loc
-savewi 3A000000 .string_loc
-loadwi 9 .return_print_hour_colon
+loadwi $0 .string_loc
+savewi 0x3A000000 .string_loc
+loadwi $9 .return_print_hour_colon
 jmp .print
 .return_print_hour_colon
 
 ### Print the minute
-loadb A FFFFE93E           	# RTC minute
-loadwi B .string_loc
-loadwi 9 .return_itoa_minute	# Return address
+loadb $0 &FFFFE93E           	# RTC minute
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_minute	# Return address
 jmp .itoa
 .return_itoa_minute
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_minute
+loadwi $0 .string_loc
+loadwi $9 .return_print_minute
 jmp .print
 .return_print_minute
 
 ## Print a colon
-loadwi A .string_loc
-savewi 3A000000 .string_loc
-loadwi 9 .return_print_minute_colon
+loadwi $0 .string_loc
+savewi 0x3A000000 .string_loc
+loadwi $9 .return_print_minute_colon
 jmp .print
 .return_print_minute_colon
 
 ### Print the second
-loadb A FFFFE93F           	# RTC second
-loadwi B .string_loc
-loadwi 9 .return_itoa_second	# Return address
+loadb $0 &FFFFE93F           	# RTC second
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_second	# Return address
 jmp .itoa
 .return_itoa_second
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_second
+loadwi $0 .string_loc
+loadwi $9 .return_print_second
 jmp .print
 .return_print_second
 
 ## Print a dot
-loadwi A .string_loc
-savewi 2E000000 .string_loc
-loadwi 9 .return_print_second_dot
+loadwi $0 .string_loc
+savewi 0x2E000000 .string_loc
+loadwi $9 .return_print_second_dot
 jmp .print
 .return_print_second_dot
 
 ### Print the microsecond
-loadw A FFFFE940		# RTC microsecond
-loadwi B .string_loc
-loadwi 9 .return_itoa_usec	# Return address
+loadw $0 &FFFFE940		# RTC microsecond
+loadwi $1 .string_loc
+loadwi $9 .return_itoa_usec	# Return address
 jmp .itoa
 .return_itoa_usec
 
 ## Print the string
-loadwi A .string_loc
-loadwi 9 .return_print_usec
+loadwi $0 .string_loc
+loadwi $9 .return_print_usec
 jmp .print
 .return_print_usec
 
 ## Print a line feed
-loadwi A .string_loc
-savewi A000000 .string_loc
-loadwi 9 .return_print_usec_lf
+loadwi $0 .string_loc
+savewi 0xA000000 .string_loc
+loadwi $9 .return_print_usec_lf
 jmp .print
 .return_print_usec_lf
 
@@ -166,28 +166,28 @@ halt
 
 ### print function
 # Input: Register 9: Return address
-# Input: Register A: Start location of our string
+# Input: Register 0: Start location of our string
 .print
 
 # Push to the stack
-addi 21 1 21
-savewr A 21
-addi 21 1 21
-savewr B 21
+addi $sp 4 $sp
+savewr $0 $sp
+addi $sp 4 $sp
+savewr $1 $sp
 
 .print_loop
 
 # Load character
-loadbr B A
+loadbr $1 $0
 
 # Have we reached null?
-jmpeqi B 0 .print_end
+jmpeqi $1 0 .print_end
 
 # Not null, print the character
-saveb B FFFFEFFF
+saveb $1 &FFFFEFFF
 
 # Next character
-addi A 1 A
+addi $0 0x1 $0
 
 # And back around
 jmp .print_loop
@@ -195,56 +195,55 @@ jmp .print_loop
 .print_end
 
 # Pop off the stack
-loadwr B 21
-subi 21 1 21
-loadwr A 21
-subi 21 1 21
+loadwr $1 $sp
+subi $sp 4 $sp
+loadwr $0 $sp
+subi $sp 4 $sp
 
 # Return
-jmpr 9
+jmpr $9
 
 
 ### itoa function
-# Input: Register 9: Return address
-# Input: Register A: Our number to convert to a string
-# Input: Register B: Destination address for null-terminated string (must be at least 12 bytes)
+# Input: Register $9: Return address
+# Input: Register $0: Our number to convert to a string
+# Input: Register $1: Destination address for null-terminated string (must be at least 12 bytes)
 .itoa
 
 # Push to the stack
-addi 21 4 21
-savewr A 21
-addi 21 4 21
-savewr B 21
-addi 21 4 21
-savewr C 21
-addi 21 4 21
-savewr D 21
-addi 21 4 21
-savewr E 21
-addi 21 4 21
-savewr F 21
-addi 21 4 21
-savewr 10 21
+addi $sp 4 $sp
+savewr $0 $sp
+addi $sp 4 $sp
+savewr $1 $sp
+addi $sp 4 $sp
+savewr $2 $sp
+addi $sp 4 $sp
+savewr $3 $sp
+addi $sp 4 $sp
+savewr $4 $sp
+addi $sp 4 $sp
+savewr $5 $sp
+addi $sp 4 $sp
+savewr $6 $sp
 
-## Zero the string
-# Save B
-copy C B
+# Save $1 (destination)
+copy $2 $1
 
 # Begin zeroing
-savewri 0 B  # 0x0-0x3
-addi B 4 B
-savewri 0 B  # 0x4-0x7
-addi B 4 B
-savewri 0 B  # 0x8-0xc
+savewri 0 $1  # 0x0-0x3
+addi $1 4 $1
+savewri 0 $1  # 0x4-0x7
+addi $1 4 $1
+savewri 0 $1  # 0x8-0xc
 
-# Restore B
-swap C B
+# Restore $1
+swap $2 $1
 
 # Zero must be handled specially
-jmpnei A 0 .itoa_non_zero
+jmpnei $0 0 .itoa_non_zero
 
 # It's zero.
-savebri 30 B   # Save ASCII 0 to the string
+savebri 0x30 $1   # Save ASCII 0 to the string
 
 # Return
 jmp .itoa_done
@@ -252,69 +251,69 @@ jmp .itoa_done
 # It isn't zero, continue
 .itoa_non_zero
 
-# Zero out the negative flag
-loadwi C 0
+# Zero out the negative flag ($2)
+loadwi $2 0
 
-# Store original offset
-copy E B
+# Store original offset in $4
+copy $4 $1
 
 # Is it negative?
-jmpgti A 0 .itoa_loop
+jmpgti $0 0 .itoa_loop
 
 # It's negative, negate it
-muli A -1 A
-loadwi C 1  # Set negative flag
+muli $0 -1 $0
+loadwi $2 1    # Set negative flag
 
 .itoa_loop
 
 # While the number is not zero
-jmpeqi A 0 .itoa_loop_done
+jmpeqi $0 0 .itoa_loop_done
 
-modi A A D
-addi D 30 D  # Add ASCII '0' to obtain the digit
-savebr D B   # Write it to the string
-addi B 1 B   # Next character
-divi A A A
+modi $0 0xA $3
+addi $3 0x30 $3  # Add ASCII '0' to obtain the digit
+savebr $3 $1     # Write it to the string
+addi $1 0x1 $1   # Next character
+divi $0 0xA $0
 
-jmp .itoa_loop  # Back around
+jmp .itoa_loop    # Back around
 
 .itoa_loop_done
 
 # Number is not negative, skip this bit
-jmpeqi C 0 .itoa_reverse
+jmpeqi $2 0 .itoa_reverse
 
 # Number is negative, add the sign
-savebri 2D B
-addi B 1 B
+savebri 0x2D $1
+addi $1 1 $1
 
 .itoa_reverse
 
 # Start position
-loadwi C 0
+loadwi $2 0
 
-# Compute end position
-sub B E D
-subi D 1 D
+# Compute end position using original offset ($4)
+sub $1 $4 $3
+subi $3 1 $3
 
 .itoa_reverse_loop
 
 # Check if we've reversed the whole string
-jmpge C D .itoa_done
+jmpge $2 $3 .itoa_done
 
 # Get start char
-add E C A    # string start + start offset
-loadbr F A   # Load start char into F
+add $4 $2 $0    # string start + start offset
+loadbr $5 $0    # Load start char into $5
 
 # Get end char
-add E D B    # string start + end offset
-loadbr 10 B  # Load end char into 10
+add $4 $3 $1    # string start + end offset
+loadbr $6 $1    # Load end char into $6
 
 # Swap the characters
-savebr F B   # Load start char into B (start offset)
-savebr 10 A  # Load end char into A (end offset)
+savebr $5 $1     # Load start char into $1 (start offset)
+savebr $6 $0     # Load end char into $0 (end offset)
 
-addi C 1 C   # Start offset
-subi D 1 D   # End offset
+addi $2 1 $2     # Start offset
+subi $3 1 $3     # End offset
 
 # Loop again
 jmp .itoa_reverse_loop
@@ -322,37 +321,37 @@ jmp .itoa_reverse_loop
 .itoa_done
 
 # Pop from the stack
-loadwr 10 21
-subi 21 4 21
-loadwr F 21
-subi 21 4 21
-loadwr E 21
-subi 21 4 21
-loadwr D 21
-subi 21 4 21
-loadwr C 1
-subi 21 4 21
-loadwr B 1
-subi 21 4 21
-loadwr A 1
-subi 21 4 21
+loadwr $6 $sp
+subi $sp 4 $sp
+loadwr $5 $sp
+subi $sp 4 $sp
+loadwr $4 $sp
+subi $sp 4 $sp
+loadwr $3 $sp
+subi $sp 4 $sp
+loadwr $2 $sp
+subi $sp 4 $sp
+loadwr $1 $sp
+subi $sp 4 $sp
+loadwr $0 $sp
+subi $sp 4 $sp
 
 # Jump back
-jmpr 9
+jmpr $9
 
 
 ### Interrupt vector
 .intr_vec
-jmp FFFFFEEA
+jmp &FFFFFEEA
 
 ### Stack
 .stack
-!zero 400
-!align 4
+!zero 0x400
+!align 0x4
 .end_stack
 
 ### String location
 .string_loc
-!zero 10
-!align 4
+!zero 0x10
+!align 0x4
 .end_string_loc

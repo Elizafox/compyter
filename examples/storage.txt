@@ -1,38 +1,41 @@
 ### Set up interrupt vectors
-loadwi 15 0
+loadwi $0 0
 
 # first vector
-strapr 15 .intr_vec
+strapr $0 .intr_vec
 
 # Point to next vector
-addi 15 1 15
+addi $0 1 $0
 
 # Remaining vectors
 .write_vector
-strapr 15 .exit
-addi 15 1 15
-jmpgei 15 FF .write_done  # 256 vectors
+strapr $0 .exit
+addi $0 1 $0
+jmpgei $0 0xFF .write_done  # 256 vectors
 jmp .write_vector  # Next vector
 
 .write_done
 
+# Clear $0
+loadwi $0 0
+
 # Enable interrupts
-loadwi 25 00000001
+loadwi $stat 0x00000001
 
 ### Set up interrupt controller
-savewi 40 FFFFEFD2
-savewi .keyboard_intr FFFFEFD6
-savebi 1 FFFFEFDA
-savewi 0 FFFFEFCE
+savewi 0x40 &FFFFEFD2
+savewi .keyboard_intr &FFFFEFD6
+savebi 1 &FFFFEFDA
+savewi 0 &FFFFEFCE
 
 ### Set up keyboard
-savewi 1 FFFFEFC1
+savewi 1 &FFFFEFC1
 
 ### Write enable the storage device
-savewi 1 FFFFEDB4
+savewi 1 &FFFFEDB4
 
-### Store the size of the storage device in E
-loadw E FFFFEDB8
+### Store the size of the storage device in $4
+loadw $4 &FFFFEDB8
 
 ### Main loop
 .loop
@@ -41,32 +44,32 @@ loadw E FFFFEDB8
 wait
 
 # Check flag
-jmpeqi A 1 .exit
+jmpeqi $0 1 .exit
 
-# Write to disk at offset C (modulo 512)
-addi C FFFFEDBC D
-savebr B D
+# Write to disk at offset $2 (modulo 512)
+addi $2 0xFFFFEDBC $3
+savebr $1 $3
 
 # Compute next offset
-addi C 1 C
+addi $2 1 $2
 
 # Are we over the window?
-jmplti C 200 .lt_200
+jmplti $2 0x200 .lt_200
 
 # Reset and shift the offset to the next 512-byte block
-loadwi C 0
-loadw D FFFFEDB0
-addi D 200 D
+loadwi $2 0
+loadw $3 &FFFFEDB0
+addi $3 0x200 $3
 
 # Did we overshoot?
-jmple D E .save_offset
+jmple $3 $4 .save_offset
 
 # We overshot the size, wrap around
-loadwi D 0
+loadwi $3 0
 
 # Save the new offset to the storage offset register
 .save_offset
-savew D FFFFEDB0
+savew $3 &FFFFEDB0
 
 .lt_200
 
@@ -78,22 +81,22 @@ jmp .loop
 .keyboard_intr
 
 # Read keystroke
-loadw B FFFFEFC5
+loadw $1 &FFFFEFC5
 
 # Print it if nonzero
-jmpeqi B 0 .return
-saveb B FFFFEFFF
+jmpeqi $1 0 .return
+saveb $1 &FFFFEFFF
 
 # Is the keystroke a tilde?
-jmpnei B 7E .return
+jmpnei $1 0x7E .return
 
 # It is, so set the flag to exit
-loadwi A 1
+loadwi $0 1
 
 # Return
 .return
 # Reenable interrupts
-savewi 0 FFFFEFCE 0
+savewi 0 &FFFFEFCE
 rfe
 
 ### End program
@@ -102,4 +105,4 @@ halt
 
 ### Interrupt vector
 .intr_vec
-jmp FFFFEFEA
+jmp &FFFFEFEA

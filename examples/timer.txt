@@ -1,37 +1,37 @@
 ### Set up interrupt vectors
-loadwi 15 0
+loadwi $0 0
 
 # first vector
-strapr 15 .intr_vec
+strapr $0 .intr_vec
 
 # Point to next vector
-addi 15 1 15
+addi $0 1 $0
 
 # Remaining vectors
 .write_vector
-strapr 15 .exit
-addi 15 1 15
-jmpgei 15 FF .write_done  # 256 vectors
+strapr $0 .exit
+addi $0 1 $0
+jmpgei $0 0xFF .write_done  # 256 vectors
 jmp .write_vector  # Next vector
 
 .write_done
 
 # Enable interrupts
-loadwi 25 00000001
+loadwi $stat 0x00000001
 
 ### Set up interrupt controller
-savewi 20 FFFFEFD2
-savewi .timer_intr FFFFEFD6
-savebi 1 FFFFEFDA
-savewi 0 FFFFEFCE
+savewi 0x20 &FFFFEFD2
+savewi .timer_intr &FFFFEFD6
+savebi 1 &FFFFEFDA
+savewi 0 &FFFFEFCE
 
 ### Set up timer
-savewi 64 FFFFEFC9
+savewi 0x64 &FFFFEFC9
 
 ### Main loop
 .loop
 nop
-jmplti A F .loop
+jmplti $0 0xF .loop
 
 
 ### Exit
@@ -41,10 +41,10 @@ halt
 
 ### Timer interrupt
 .timer_intr
-addi A 1 A
-savewi 0 FFFFEFCE  # Re-enable interrupts
+addi $0 1 $0
+savewi 0 &FFFFEFCE  # Re-enable interrupts
 rfe
 
 ### Interrupt vectors
 .intr_vec
-jmp FFFFEFEA
+jmp &FFFFEFEA
